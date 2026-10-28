@@ -1,0 +1,339 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Validasi Barang - SIGMA";
+}
+
+@section Styles {
+    <style>
+        .card-hover {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .bg-pertamina-blue {
+            background-color: #003876 !important;
+        }
+
+        .bg-pertamina-red {
+            background-color: #ED1B24 !important;
+        }
+
+        .text-pertamina-red {
+            color: #ED1B24 !important;
+        }
+
+        .btn-pertamina-red {
+            background-color: #ED1B24;
+            color: white;
+            border: none;
+        }
+
+        .btn-pertamina-red:hover {
+            background-color: #d0121a;
+            color: white;
+        }
+
+        .tracking-wider {
+            letter-spacing: 0.5px;
+        }
+    </style>
+}
+
+<!-- KONTEN UTAMA -->
+<div class="container-fluid py-4 px-3 px-md-4 animate-fade-in" style="max-width: 1400px; margin: 0 auto;">
+
+    <!-- JUDUL HALAMAN -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-3 me-3 flex-shrink-0"
+                     style="width: 42px; height: 42px;">
+                    <i class="bi bi-shield-check text-pertamina-red fs-5"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bolder text-dark m-0 fs-5 fs-md-4" style="letter-spacing: -0.5px;">
+                        VALIDASI DATA BARANG MASUK
+                    </h4>
+                    <p class="text-muted small m-0 mt-1">Kelola dan tinjau ulang perangkat baru yang menunggu
+                        konfirmasi.</p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/KelolaBarang/Index"
+                       class="btn btn-light border rounded-pill px-4 py-2 fw-semibold small shadow-sm text-dark">
+                        Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KARTU STATISTIK RINGKASAN VALIDASI -->
+        <div class="row g-3 g-md-4 mb-4">
+            <div class="col-12 col-md-6">
+                <div
+                    class="card validation-summary-card validation-pending-card text-white border-0 shadow-sm rounded-4 position-relative overflow-hidden card-hover h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="d-flex align-items-center mb-2 opacity-75">
+                                <i class="bi bi-hourglass-split fs-5 me-2"></i>
+                                <span class="fw-bold small text-uppercase tracking-wider">Menunggu Validasi</span>
+                            </div>
+                            <div class="d-flex align-items-baseline mb-1">
+                                <h1 id="statPendingCount" class="fw-bolder mb-0 me-2"
+                                    style="font-size: 2.2rem; letter-spacing: -1px;">
+                                    0
+                                </h1>
+                                <span class="fs-5 fw-normal" style="opacity: 0.85;">Item</span>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-white bg-opacity-10 rounded-4 d-none d-sm-block">
+                            <i class="bi bi-clock-history text-white opacity-75" style="font-size: 2.3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div id="queueStatusCard" class="card validation-summary-card validation-status-card is-loading text-white border-0 shadow-sm rounded-4 position-relative overflow-hidden card-hover h-100">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="d-flex align-items-center mb-2 opacity-75">
+                                <i id="queueStatusHeadingIcon" class="bi bi-hourglass-split fs-5 me-2"></i>
+                                <span class="fw-bold small text-uppercase tracking-wider">Status Antrean</span>
+                            </div>
+                            <div class="d-flex align-items-baseline mb-1">
+                                <h1 id="statQueueStatus" class="fw-bolder mb-0 me-2" style="font-size: 2.2rem; letter-spacing: -1px;">
+                                    Memuat
+                                </h1>
+                            </div>
+                            <span id="statQueueDescription" class="small fw-light" style="opacity: 0.9;">Memeriksa antrean validasi.</span>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-10 rounded-4 d-none d-sm-block">
+                                <i id="queueStatusLargeIcon" class="bi bi-hourglass-split text-white opacity-75" style="font-size: 2.3rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL DAFTAR BARANG YANG PERLU DIVALIDASI -->
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden card-hover mb-4">
+                <div class="card-body p-0">
+                    <div class="table-responsive p-2 p-md-3">
+                        <table class="table table-borderless table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="border-bottom">
+                                <tr class="text-secondary small fw-bold text-uppercase text-nowrap"
+                                    style="letter-spacing: 0.5px;">
+                                    <th class="py-3 text-center" style="min-width: 50px;">No.</th>
+                                    <th class="py-3 text-center" style="min-width: 90px;">Dokumentasi</th>
+                                    <th class="py-3" style="min-width: 250px;">Nama & Kategori Perangkat</th>
+                                    <th class="py-3 text-center" style="min-width: 100px;">Jumlah</th>
+                                    <th class="py-3 text-center" style="min-width: 110px;">Kondisi</th>
+                                    <th class="py-3 text-center" style="min-width: 180px;">Aksi Validasi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="validasiTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted small">Memuat data validasi...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        @section Scripts {
+            <script>
+                window.API_BASE_URL = '@apiBaseUrl';
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    loadValidasiData();
+                });
+
+                async function loadValidasiData() {
+                    try {
+                        // Sesuaikan endpoint API backend Anda untuk mengambil data yang belum divalidasi
+                        const response = await fetch(`${window.API_BASE_URL}/api/perangkat/validasi`, {
+                            method: 'GET',
+                            credentials: 'include'
+                        });
+
+                        if (response.status === 401) {
+                            window.location.href = '/Auth/Login';
+                            return;
+                        }
+
+                        const resData = await response.json();
+                        if (resData && resData.success) {
+                            const items = Array.isArray(resData.data) ? resData.data : [];
+                            renderValidasiTable(items);
+                            document.getElementById('statPendingCount').textContent = items.length;
+                            document.getElementById('statQueueStatus').textContent = items.length ? 'Perlu Ditinjau' : 'Selesai';
+                            document.getElementById('statQueueDescription').textContent = items.length
+                                ? `${items.length} item menunggu keputusan admin.`
+                                : 'Tidak ada item yang menunggu persetujuan.';
+                            updateQueueStatusAppearance(items.length);
+                        } else {
+                            renderValidasiTable([]);
+                            updateQueueStatusAppearance(0);
+                        }
+                    } catch (error) {
+                        console.error('Gagal memuat data validasi:', error);
+                        document.getElementById('validasiTableBody').innerHTML = `
+                                        <tr><td colspan="6" class="text-center py-4 text-danger">Gagal terhubung ke server backend.</td></tr>
+                                    `;
+                    }
+                }
+
+                function updateQueueStatusAppearance(pendingCount) {
+                    const hasPending = Number(pendingCount) > 0;
+                    const card = document.getElementById('queueStatusCard');
+                    const headingIcon = document.getElementById('queueStatusHeadingIcon');
+                    const largeIcon = document.getElementById('queueStatusLargeIcon');
+
+                    card?.classList.remove('is-loading', 'has-pending', 'is-clear');
+                    card?.classList.add(hasPending ? 'has-pending' : 'is-clear');
+                    if (headingIcon) headingIcon.className = `bi ${hasPending ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'} fs-5 me-2`;
+                    if (largeIcon) largeIcon.className = `bi ${hasPending ? 'bi-shield-fill-exclamation' : 'bi-shield-fill-check'} text-white opacity-75`;
+                    if (largeIcon) largeIcon.style.fontSize = '2.3rem';
+                }
+
+                function renderValidasiTable(items) {
+                    const tbody = document.getElementById('validasiTableBody');
+                    tbody.innerHTML = '';
+
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = `
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="bi bi-check2-all display-4 d-block mb-3 text-success opacity-75"></i>
+                                                <span class="fw-semibold">Tidak ada barang yang menunggu validasi saat ini.</span>
+                                            </td>
+                                        </tr>
+                                    `;
+                        return;
+                    }
+
+                    items.forEach((item, index) => {
+                        const itemId = Number(item.id || 0);
+                        const itemName = window.escapeHtml(item.nama || '-');
+                        const itemCategory = window.escapeHtml(item.kategori || 'Perangkat');
+                        const itemCondition = window.escapeHtml(item.kondisi || 'Rusak');
+                        const itemRack = window.escapeHtml(item.lokasiRak || '');
+                        const itemQuantity = Number(item.jumlah || 0);
+                        let finalFotoPath = '';
+                        if (item.dokumentasi) {
+                            if (item.dokumentasi.startsWith('http://') || item.dokumentasi.startsWith('https://')) {
+                                finalFotoPath = item.dokumentasi;
+                            } else if (item.dokumentasi.startsWith('/api/files/')) {
+                                finalFotoPath = item.dokumentasi;
+                            } else {
+                                let fileName = item.dokumentasi.replace(/^.*[\\\/]/, '');
+                                finalFotoPath = `${window.API_BASE_URL}/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`;
+                            }
+                        }
+
+                        let isBaik = item.kondisi && item.kondisi.toLowerCase().includes('baik');
+                        let kondisiBadge = isBaik ?
+                            `<span class="badge bg-success px-2 py-1 rounded-pill fw-semibold" style="font-size: 0.7rem;">${itemCondition}</span>` :
+                            `<span class="badge bg-danger px-2 py-1 rounded-pill fw-semibold" style="font-size: 0.7rem;">${itemCondition}</span>`;
+
+                        let lokasiRakHtml = item.lokasiRak ? `<div class="text-muted small mt-1"><i class="bi bi-geo-alt me-1 text-danger"></i> ${itemRack}</div>` : '';
+
+                        let tr = document.createElement('tr');
+                        tr.className = "border-bottom border-light";
+                        tr.innerHTML = `
+                                        <td class="text-center fw-semibold text-muted">${index + 1}</td>
+                                        <td class="text-center py-3">
+                                            ${finalFotoPath ? `<img src="${window.escapeHtml(finalFotoPath)}" alt="Foto" class="rounded-3 shadow-sm" style="width: 45px; height: 45px; object-fit: cover; background: #fff; padding: 2px; border: 1px solid #eee;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="rounded-3 bg-light align-items-center justify-content-center mx-auto" style="display:none;width:45px;height:45px;border:1px dashed #ccc;"><i class="bi bi-image text-muted opacity-50"></i></div>` :
+                                `<div class="rounded-3 bg-light d-flex align-items-center justify-content-center mx-auto" style="width: 45px; height: 45px; border: 1px dashed #ccc;"><i class="bi bi-image text-muted opacity-50"></i></div>`}
+                                        </td>
+                                        <td>
+                                            <h6 class="text-dark fw-bold mb-1">${itemName}</h6>
+                                            <span class="badge bg-secondary bg-opacity-10 text-dark border border-secondary border-opacity-25 px-2 py-0.5" style="font-size: 0.7rem;">
+                                                ${itemCategory}
+                                            </span>
+                                            ${lokasiRakHtml}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border px-2 py-1">${itemQuantity} Unit</span>
+                                        </td>
+                                        <td class="text-center">${kondisiBadge}</td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" onclick="setujuiValidasi(${itemId})"
+                                                        class="btn btn-success btn-sm rounded-pill px-2.5 fw-bold d-flex align-items-center shadow-sm"
+                                                        style="font-size: 0.75rem;" title="Setujui Data">
+                                                    <i class="bi bi-check-lg me-1"></i> Setujui
+                                                </button>
+                                                <button type="button" onclick="tolakValidasi(${itemId})"
+                                                        class="btn btn-outline-danger btn-sm rounded-pill px-2.5 fw-bold d-flex align-items-center shadow-sm"
+                                                        style="font-size: 0.75rem;" title="Tolak / Hapus">
+                                                    <i class="bi bi-x-lg me-1"></i> Tolak
+                                                </button>
+                                            </div>
+                                        </td>
+                                    `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                async function setujuiValidasi(id) {
+                    try {
+                        const response = await fetch(`${window.API_BASE_URL}/api/perangkat/${id}/setujui-validasi`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                        const result = await response.json();
+
+                        if (result.success) {
+                            Swal.fire('Berhasil!', result.message || 'Data berhasil disetujui.', 'success');
+                            loadValidasiData();
+                        } else {
+                            Swal.fire('Gagal!', result.message || 'Terjadi kesalahan.', 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('Gagal!', 'Tidak dapat terhubung ke server.', 'error');
+                    }
+                }
+
+                async function tolakValidasi(id) {
+                    Swal.fire({
+                        title: 'Apakah Anda yakin?',
+                        text: "Yakin ingin menolak dan menghapus data ini?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ED1B24',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, Tolak!',
+                        cancelButtonText: 'Batal'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            try {
+                                const response = await fetch(`${window.API_BASE_URL}/api/perangkat/${id}/tolak-validasi`, {
+                                    method: 'POST',
+                                    credentials: 'include'
+                                });
+                                const resJson = await response.json();
+
+                                if (resJson.success) {
+                                    Swal.fire('Ditolak!', resJson.message || 'Data berhasil ditolak.', 'success');
+                                    loadValidasiData();
+                                } else {
+                                    Swal.fire('Gagal!', resJson.message || 'Terjadi kesalahan.', 'error');
+                                }
+                            } catch (error) {
+                                Swal.fire('Gagal!', 'Tidak dapat terhubung ke server.', 'error');
+                            }
+                        }
+                    });
+                }
+            </script>
+        }

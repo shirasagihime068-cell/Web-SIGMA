@@ -1,0 +1,241 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Kelola Vendor - SIGMA";
+}
+
+<div class="vendor-page animate-fade-in">
+    <section class="vendor-hero-card" aria-labelledby="vendorPageTitle">
+        <div class="vendor-heading">
+            <div class="vendor-heading-icon" aria-hidden="true"><i class="bi bi-buildings-fill"></i></div>
+            <div>
+                <h2 id="vendorPageTitle">Manajemen Vendor</h2>
+                <p>Kelola mitra dan perusahaan pemasok SIGMA secara ringkas.</p>
+            </div>
+        </div>
+        <form id="formTambahVendor" class="vendor-create-form">
+            <div class="vendor-create-field">
+                <label for="inputNamaVendor">Nama Vendor / PT <span class="text-danger">*</span></label>
+                <input type="text" id="inputNamaVendor" class="form-control" placeholder="Masukkan nama vendor..." required autocomplete="off" />
+            </div>
+            <a href="/Home/Index" class="btn btn-light border"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Vendor</button>
+        </form>
+    </section>
+
+    <section class="vendor-directory-card" aria-labelledby="vendorDirectoryTitle">
+        <div class="vendor-directory-header">
+            <div class="vendor-directory-title">
+                <h3 id="vendorDirectoryTitle">Daftar Vendor Terdaftar</h3>
+                <p>Ditampilkan dalam kartu ringkas agar mudah dipindai dan tidak memanjang.</p>
+            </div>
+            <span id="vendorTotal" class="vendor-total">0 vendor</span>
+        </div>
+        <div class="vendor-toolbar">
+            <form id="searchForm" class="vendor-search-shell" role="search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" id="searchString" placeholder="Cari nama vendor..." aria-label="Cari vendor" />
+                <button type="button" id="btnResetSearch" class="btn btn-light border d-none" title="Bersihkan pencarian"><i class="bi bi-x-lg"></i></button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Cari</button>
+            </form>
+        </div>
+        <div id="vendorGrid" class="vendor-grid" aria-live="polite">
+            <div class="vendor-empty"><span class="spinner-border spinner-border-sm"></span><span>Memuat data vendor...</span></div>
+        </div>
+        <nav id="vendorPagination" class="vendor-pagination" aria-label="Navigasi daftar vendor"></nav>
+    </section>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script>
+        window.API_BASE_URL = '@apiBaseUrl';
+        let vendorCache = new Map();
+        let vendorItems = [];
+        let vendorPage = 1;
+        const vendorPageSize = 8;
+        let vendorSearchTimer = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadVendorData();
+            document.getElementById('formTambahVendor').addEventListener('submit', handleAddVendor);
+            document.getElementById('searchForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                vendorPage = 1;
+                loadVendorData();
+            });
+            document.getElementById('btnResetSearch').addEventListener('click', function () {
+                document.getElementById('searchString').value = '';
+                vendorPage = 1;
+                loadVendorData();
+            });
+            document.getElementById('searchString').addEventListener('input', function () {
+                window.clearTimeout(vendorSearchTimer);
+                vendorSearchTimer = window.setTimeout(function () {
+                    vendorPage = 1;
+                    loadVendorData();
+                }, 300);
+            });
+            document.getElementById('vendorGrid').addEventListener('click', function (event) {
+                const button = event.target.closest('[data-vendor-action]');
+                if (!button) return;
+                const vendorId = Number(button.dataset.vendorId);
+                if (button.dataset.vendorAction === 'edit') editVendor(vendorId);
+                if (button.dataset.vendorAction === 'delete') konfirmasiHapusVendor(vendorId);
+            });
+            document.getElementById('vendorPagination').addEventListener('click', function (event) {
+                const button = event.target.closest('[data-vendor-page]');
+                if (!button || button.disabled) return;
+                vendorPage = Number(button.dataset.vendorPage);
+                renderVendorGrid();
+            });
+        });
+
+        async function handleAddVendor(event) {
+            event.preventDefault();
+            const input = document.getElementById('inputNamaVendor');
+            const namaVendor = input.value.trim();
+            if (!namaVendor) {
+                Swal.fire('Perhatian', 'Nama vendor tidak boleh kosong.', 'warning');
+                return;
+            }
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ NamaVendor: namaVendor }), credentials: 'include'
+                });
+                if (response.status === 401) {
+                    window.location.href = '/Auth/Login';
+                    return;
+                }
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal menambahkan vendor.');
+                input.value = '';
+                await Swal.fire({ title: 'Berhasil!', text: result.message || 'Vendor berhasil ditambahkan.', icon: 'success', timer: 1400, showConfirmButton: false });
+                vendorPage = 1;
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message || 'Tidak dapat terhubung ke server backend.', 'error');
+            }
+        }
+
+        async function loadVendorData() {
+            const searchString = document.getElementById('searchString').value.trim();
+            document.getElementById('btnResetSearch').classList.toggle('d-none', !searchString);
+            const params = new URLSearchParams();
+            if (searchString) params.append('searchString', searchString);
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor?${params.toString()}`, { credentials: 'include' });
+                if (response.status === 401) {
+                    window.location.href = '/Auth/Login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Gagal memuat data vendor.');
+                const payload = await response.json();
+                const allItems = Array.isArray(payload) ? payload : (payload.data || payload.vendors || []);
+                vendorItems = searchString
+                    ? allItems.filter(item => (item.namaVendor || item.NamaVendor || '').toLowerCase().includes(searchString.toLowerCase()))
+                    : allItems;
+                vendorCache = new Map(allItems.map(item => [Number(item.id || item.Id), item]));
+                document.getElementById('vendorTotal').textContent = `${vendorItems.length} vendor`;
+                vendorPage = Math.min(vendorPage, Math.max(1, Math.ceil(vendorItems.length / vendorPageSize)));
+                renderVendorGrid();
+            } catch (error) {
+                console.error('Gagal memuat data vendor:', error);
+                document.getElementById('vendorGrid').innerHTML = '<div class="vendor-empty text-danger"><i class="bi bi-wifi-off"></i><strong>Gagal terhubung ke server backend.</strong></div>';
+                document.getElementById('vendorPagination').innerHTML = '';
+            }
+        }
+
+        function renderVendorGrid() {
+            const grid = document.getElementById('vendorGrid');
+            if (!vendorItems.length) {
+                grid.innerHTML = '<div class="vendor-empty"><i class="bi bi-buildings"></i><strong>Belum ada vendor yang cocok.</strong><span>Coba kata kunci lain atau tambahkan vendor baru.</span></div>';
+                renderVendorPagination(0);
+                return;
+            }
+            const startIndex = (vendorPage - 1) * vendorPageSize;
+            grid.innerHTML = vendorItems.slice(startIndex, startIndex + vendorPageSize).map((vendor, localIndex) => {
+                const id = Number(vendor.id || vendor.Id);
+                const name = escapeHtml(vendor.namaVendor || vendor.NamaVendor || '-');
+                return `<article class="vendor-card">
+                    <div class="vendor-card-icon"><i class="bi bi-building"></i></div>
+                    <div class="vendor-card-copy"><small>Vendor ${startIndex + localIndex + 1}</small><strong title="${name}">${name}</strong></div>
+                    <div class="vendor-card-actions">
+                        <button type="button" class="btn btn-outline-primary" data-vendor-action="edit" data-vendor-id="${id}"><i class="bi bi-pencil-square"></i> Edit</button>
+                        <button type="button" class="btn btn-outline-danger" data-vendor-action="delete" data-vendor-id="${id}"><i class="bi bi-trash"></i> Hapus</button>
+                    </div>
+                </article>`;
+            }).join('');
+            renderVendorPagination(Math.ceil(vendorItems.length / vendorPageSize));
+        }
+
+        function renderVendorPagination(totalPages) {
+            const nav = document.getElementById('vendorPagination');
+            if (totalPages <= 1) {
+                nav.innerHTML = '';
+                return;
+            }
+            const firstPage = Math.max(1, Math.min(vendorPage - 2, Math.max(1, totalPages - 4)));
+            const lastPage = Math.min(totalPages, firstPage + 4);
+            let html = `<button type="button" data-vendor-page="${Math.max(1, vendorPage - 1)}" ${vendorPage === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            for (let page = firstPage; page <= lastPage; page += 1) {
+                html += `<button type="button" data-vendor-page="${page}" class="${page === vendorPage ? 'active' : ''}">${page}</button>`;
+            }
+            html += `<button type="button" data-vendor-page="${Math.min(totalPages, vendorPage + 1)}" ${vendorPage === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            nav.innerHTML = html;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            })[character]);
+        }
+
+        async function editVendor(vendorId) {
+            const vendor = vendorCache.get(Number(vendorId));
+            if (!vendor) return;
+            const currentName = vendor.namaVendor || vendor.NamaVendor || '';
+            const prompt = await Swal.fire({
+                title: 'Edit Vendor', input: 'text', inputValue: currentName,
+                inputLabel: 'Nama Vendor / PT', showCancelButton: true,
+                confirmButtonText: 'Simpan perubahan', cancelButtonText: 'Batal', confirmButtonColor: '#0753a6',
+                inputValidator: value => !value.trim() ? 'Nama vendor wajib diisi.' : undefined
+            });
+            if (!prompt.isConfirmed) return;
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor/${vendorId}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', body: JSON.stringify({ NamaVendor: prompt.value.trim() })
+                });
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal memperbarui vendor.');
+                await Swal.fire({ title: 'Berhasil!', text: result.message || 'Vendor diperbarui.', icon: 'success', timer: 1300, showConfirmButton: false });
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message, 'error');
+            }
+        }
+
+        async function konfirmasiHapusVendor(vendorId) {
+            const vendor = vendorCache.get(Number(vendorId));
+            const vendorName = vendor?.namaVendor || vendor?.NamaVendor || 'Vendor';
+            const confirmation = await Swal.fire({
+                title: 'Yakin Ingin Menghapus?', text: `Data vendor "${vendorName}" akan dihapus secara permanen dari sistem.`,
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#ED1B24', cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal'
+            });
+            if (!confirmation.isConfirmed) return;
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor/${vendorId}`, { method: 'DELETE', credentials: 'include' });
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal menghapus vendor.');
+                await Swal.fire({ title: 'Terhapus!', text: result.message || 'Vendor berhasil dihapus.', icon: 'success', timer: 1400, showConfirmButton: false });
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message || 'Tidak dapat terhubung ke server backend.', 'error');
+            }
+        }
+    </script>
+}

@@ -1,0 +1,623 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Tambah Peminjaman - SIGMA";
+}
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    .form-container {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 30px 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #e6f0fa;
+        color: #003876;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bg-pertamina-red {
+        background-color: #ED1B24 !important;
+    }
+
+    .text-pertamina-red {
+        color: #ED1B24 !important;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+    }
+
+    .form-control:focus {
+        border-color: #003876 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15) !important;
+    }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-select-input {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        color: #212529;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .custom-select-input:hover,
+    .custom-select-input.active {
+        border-color: #003876;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15);
+        background-color: white;
+    }
+
+    .custom-dropdown-list {
+        position: absolute;
+        z-index: 1050;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        margin-top: 8px;
+        border: 1px solid #dcdcdc;
+        padding: 10px 0;
+    }
+
+    .dropdown-item-custom {
+        cursor: pointer;
+        padding: 8px 20px;
+        color: #333;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #e6f0fa;
+        color: #003876;
+    }
+</style>
+
+<!-- KONTEN UTAMA -->
+<div class="container py-4 py-md-5 animate-fade-in d-flex justify-content-center px-3">
+    <div class="card border-0 shadow-sm rounded-4 w-100 bg-white" style="max-width: 800px;">
+        <div class="card-header bg-white border-bottom p-4 d-flex align-items-center rounded-top-4">
+            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                 style="width: 50px; height: 50px;">
+                <i class="bi bi-clock-history text-primary fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Tambah Riwayat Peminjaman</h5>
+                <p class="text-muted small m-0 mt-1">Catat sirkulasi peminjaman perangkat berdasarkan data gudang.</p>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5" style="font-size: 0.85rem;">
+            <form id="formTambahPeminjaman">
+
+                <!-- Nama Peminjam -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Nama Peminjam <span class="text-danger">*</span></label>
+                    <input type="text" id="inputNamaPeminjam"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                           placeholder="Masukkan nama peminjam..." required autocomplete="off" />
+                </div>
+
+                <!-- Jabatan Peminjam -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Jabatan Peminjam <span class="text-danger">*</span></label>
+                    <input type="text" id="inputJabatan"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                           placeholder="Masukkan jabatan peminjam..." required autocomplete="off" />
+                </div>
+
+                <!-- Fungsi Peminjam -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Fungsi / Departemen <span class="text-danger">*</span></label>
+                    <input type="text" id="inputFungsi"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                           placeholder="Masukkan fungsi/departemen..." required autocomplete="off" />
+                </div>
+
+                <!-- Kategori -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Kategori Barang</label>
+                    <div class="custom-dropdown-container">
+                        <div class="custom-select-input shadow-sm rounded-pill px-3 py-2 bg-light border"
+                             id="kategoriSelectBox" onclick="toggleKategoriDropdown()">
+                            <span id="kategoriSelectedText"> Semua Kategori </span>
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <input type="hidden" id="filterKategoriValue" value="">
+                        <div class="custom-dropdown-list shadow-lg" id="kategoriDropdownList">
+                            <div class="dropdown-item-custom fw-semibold"
+                                 onclick="selectKategori('', ' Semua Kategori ')"> Semua Kategori </div>
+                            <!-- Dinamis dimuat via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Perangkat -->
+                <div class="mb-3 position-relative">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Pilih Perangkat / Spesifikasi <span
+                        class="text-danger">*</span></label>
+                        <input type="text" id="searchInput"
+                               class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                               placeholder="Ketik untuk mencari perangkat..." onkeyup="performSearch()" autocomplete="off"
+                               required />
+                        <div id="resultsDropdown" class="custom-dropdown-list shadow-lg"></div>
+                        <input type="hidden" id="hiddenPerangkatId" required />
+                    </div>
+
+                    <!-- LOKASI PEMINJAMAN -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small text-uppercase"
+                               style="letter-spacing: 0.5px;">Lokasi Barang Dipinjam<span
+                            class="text-danger">*</span></label>
+                            <div class="custom-dropdown-container">
+                                <div class="custom-select-input shadow-sm rounded-pill px-3 py-2 bg-light border"
+                                     id="lokasiSelectBox" onclick="toggleLokasiDropdown()">
+                                    <span id="lokasiSelectedText"> Pilih Lokasi </span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </div>
+                                <input type="hidden" id="hiddenLokasiId" required />
+                                <div class="custom-dropdown-list shadow-lg" id="lokasiDropdownList">
+                                    <!-- Dinamis dimuat via JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KOLOM SERIAL NUMBER -->
+                        <div class="mb-3 d-none position-relative" id="containerSerialNumber">
+                            <label class="form-label fw-semibold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+                                Serial Number (SN) Unit <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="serialNumberInput"
+                                   class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                   placeholder="Ketik atau pilih serial number..." onkeyup="performSearchSN()"
+                                   autocomplete="off" />
+                            <input type="hidden" id="hiddenSerialNumberValue" />
+                            <div id="resultsSerialNumberDropdown" class="custom-dropdown-list shadow-lg"></div>
+                            <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle me-1"></i> Anda dapat mengetik nomor seri secara manual atau memilih
+                                dari daftar yang tersedia.
+                            </div>
+                        </div>
+
+                        <!-- Jumlah -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark small text-uppercase"
+                                   style="letter-spacing: 0.5px;">Jumlah Unit</label>
+                            <input type="number" id="inputJumlah"
+                                   class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                   value="1" min="1" required />
+                        </div>
+
+                        <!-- Tanggal -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark small text-uppercase"
+                                       style="letter-spacing: 0.5px;">Tanggal Pinjam <span class="text-danger">*</span></label>
+                                <input type="date" id="inputTanggalPinjam"
+                                       class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                       required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark small text-uppercase"
+                                       style="letter-spacing: 0.5px;">Tanggal Kembali <span class="text-danger">*</span></label>
+                                <input type="date" id="inputTanggalKembali"
+                                       class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark" />
+                            </div>
+                        </div>
+
+                        <!-- Status Peminjaman (Fisik) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark small text-uppercase"
+                                   style="letter-spacing: 0.5px;">Status Peminjaman Fisik <span
+                                class="text-danger">*</span></label>
+                                <div class="custom-dropdown-container">
+                                    <div class="custom-select-input shadow-sm rounded-pill px-3 py-2 bg-light border"
+                                         id="statusPeminjamanSelectBox" onclick="toggleStatusPeminjamanDropdown()">
+                                        <span id="statusPeminjamanSelectedText">Dipinjam</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </div>
+                                    <input type="hidden" id="hiddenStatusPeminjamanValue" value="Dipinjam" required />
+                                    <div class="custom-dropdown-list shadow-lg" id="statusPeminjamanDropdownList">
+                                        <div class="dropdown-item-custom" onclick="selectStatusPeminjaman('Dipinjam', 'Dipinjam')">
+                                            Dipinjam</div>
+                                            <div class="dropdown-item-custom"
+                                                 onclick="selectStatusPeminjaman('Dikembalikan', 'Dikembalikan')">Dikembalikan</div>
+                                            <div class="dropdown-item-custom"
+                                                 onclick="selectStatusPeminjaman('Dikeluarkan', 'Dikeluarkan')">Dikeluarkan</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Status Persetujuan Admin -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                                           style="letter-spacing: 0.5px;">Status Persetujuan Admin <span
+                                        class="text-danger">*</span></label>
+                                        <input type="text"
+                                               class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-muted"
+                                               value="Menunggu Verifikasi" disabled />
+                                    </div>
+
+                                    <!-- Keterangan -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold text-dark small text-uppercase"
+                                               style="letter-spacing: 0.5px;">Keterangan</label>
+                                        <input type="text" id="inputKeterangan"
+                                               class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                               placeholder="Berikan Keterangan..." autocomplete="off" />
+                                    </div>
+
+                                    <!-- NOMOR BERITA ACARA -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+                                            Nomor Berita Acara (No. BA)
+                                        </label>
+                                        <input type="text" id="inputNoBa"
+                                               class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm text-dark fw-bold"
+                                               readonly />
+                                        <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">
+                                            <i class="bi bi-info-circle me-1"></i> Nomor BA otomatis akan tersimpan permanen saat data
+                                            disimpan.
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                                        <a href="/Peminjaman/Index"
+                                           class="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-dark shadow-sm"
+                                           style="font-size: 0.85rem;">Batal</a>
+                                        <button type="submit"
+                                                class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap"
+                                                style="font-size: 0.85rem;">
+                                            <i class="bi bi-save me-1"></i> Simpan Riwayat
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    @section Scripts {
+                        <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+                        <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+                        <script>
+                            window.API_BASE_URL = '@apiBaseUrl';
+                            let semuaPerangkat = [];
+                            let currentDeviceSNList = [];
+
+                            document.addEventListener("DOMContentLoaded", function () {
+                                // Set default tanggal hari ini
+                                const today = new Date().toISOString().split('T')[0];
+                                document.getElementById('inputTanggalPinjam').value = today;
+
+                                // Load options dari API backend
+                                loadCreateOptions();
+
+                                // Handle Form Submit
+                                document.getElementById('formTambahPeminjaman').addEventListener('submit', async function (e) {
+                                    e.preventDefault();
+
+                                    const payload = {
+                                        NamaPeminjam: document.getElementById('inputNamaPeminjam').value.trim(),
+                                        Jabatan: document.getElementById('inputJabatan').value.trim(),
+                                        Fungsi: document.getElementById('inputFungsi').value.trim(),
+                                        PerangkatId: parseInt(document.getElementById('hiddenPerangkatId').value),
+                                        LokasiId: parseInt(document.getElementById('hiddenLokasiId').value),
+                                        SerialNumber: document.getElementById('hiddenSerialNumberValue').value.trim(),
+                                        Jumlah: parseInt(document.getElementById('inputJumlah').value),
+                                        TanggalPinjam: document.getElementById('inputTanggalPinjam').value,
+                                        TanggalKembali: document.getElementById('inputTanggalKembali').value || null,
+                                        StatusPeminjaman: document.getElementById('hiddenStatusPeminjamanValue').value,
+                                        Status: "Pending",
+                                        Keterangan: document.getElementById('inputKeterangan').value.trim(),
+                                        NoBa: document.getElementById('inputNoBa').value.trim()
+                                    };
+
+                                    if (!payload.PerangkatId) {
+                                        Swal.fire('Perhatian', 'Silakan pilih perangkat terlebih dahulu.', 'warning');
+                                        return;
+                                    }
+                                    if (!payload.LokasiId) {
+                                        Swal.fire('Perhatian', 'Silakan pilih lokasi peminjaman.', 'warning');
+                                        return;
+                                    }
+
+                                    try {
+                                        const response = await fetch(`${window.API_BASE_URL}/api/peminjaman`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(payload),
+                                            credentials: 'include'
+                                        });
+
+                                        if (response.status === 401) {
+                                            window.location.href = '/Auth/Login';
+                                            return;
+                                        }
+
+                                        const result = await response.json();
+
+                                        if (response.ok && result.success) {
+                                            Swal.fire({
+                                                title: 'Berhasil!',
+                                                text: result.message || 'Riwayat peminjaman berhasil disimpan.',
+                                                icon: 'success',
+                                                timer: 1500,
+                                                showConfirmButton: false,
+                                                customClass: { popup: 'rounded-4 shadow-lg' }
+                                            }).then(() => {
+                                                window.location.href = '/Peminjaman/Index';
+                                            });
+                                        } else {
+                                            Swal.fire('Gagal!', result.message || 'Terjadi kesalahan saat menyimpan.', 'error');
+                                        }
+                                    } catch (error) {
+                                        Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+                                    }
+                                });
+                            });
+
+                            async function loadCreateOptions() {
+                                try {
+                                    const response = await fetch(`${window.API_BASE_URL}/api/peminjaman/create-options`, {
+                                        method: 'GET',
+                                        credentials: 'include'
+                                    });
+
+                                    if (response.status === 401) {
+                                        window.location.href = '/Auth/Login';
+                                        return;
+                                    }
+
+                                    const resJson = await response.json();
+                                    const options = resJson.options || resJson.data || resJson;
+
+                                    semuaPerangkat = options.perangkatList || options.PerangkatList || [];
+                                    const katList = options.kategoriList || options.KategoriList || [];
+                                    const locList = options.lokasiList || options.LokasiList || [];
+                                    const nextNoBa = options.nextNoBa || options.NextNoBa || '';
+
+                                    // Set No. BA
+                                    document.getElementById('inputNoBa').value = nextNoBa;
+
+                                    // Render Kategori Dropdown
+                                    const katContainer = document.getElementById('kategoriDropdownList');
+                                    let katHtml = `<div class="dropdown-item-custom fw-semibold" onclick="selectKategori('', ' Semua Kategori ')"> Semua Kategori </div>`;
+                                    katList.forEach(kat => {
+                                        const encoded = encodeURIComponent(String(kat)).replace(/'/g, '%27');
+                                        katHtml += `<div class="dropdown-item-custom" onclick="selectKategori(decodeURIComponent('${encoded}'), decodeURIComponent('${encoded}'))">${window.escapeHtml(kat)}</div>`;
+                                    });
+                                    katContainer.innerHTML = katHtml;
+
+                                    // Render Lokasi Dropdown
+                                    const locContainer = document.getElementById('lokasiDropdownList');
+                                    let locHtml = '';
+                                    locList.forEach(loc => {
+                                        const id = loc.value || loc.Value || loc.id || loc.Id;
+                                        const text = loc.text || loc.Text || loc.namaLokasi || loc.NamaLokasi;
+                                        const encodedId = encodeURIComponent(String(id)).replace(/'/g, '%27');
+                                        const encodedText = encodeURIComponent(String(text)).replace(/'/g, '%27');
+                                        locHtml += `<div class="dropdown-item-custom" onclick="selectLokasi(decodeURIComponent('${encodedId}'), decodeURIComponent('${encodedText}'))">${window.escapeHtml(text)}</div>`;
+                                    });
+                                    locContainer.innerHTML = locHtml;
+
+                                } catch (error) {
+                                    console.error('Gagal memuat opsi form create:', error);
+                                }
+                            }
+
+                            function toggleKategoriDropdown() {
+                                const dropdown = document.getElementById('kategoriDropdownList');
+                                const box = document.getElementById('kategoriSelectBox');
+                                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+                                box.classList.toggle('active');
+                                document.getElementById('statusPeminjamanDropdownList').style.display = 'none';
+                                document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                document.getElementById('lokasiDropdownList').style.display = 'none';
+                                document.getElementById('resultsDropdown').style.display = 'none';
+                            }
+
+                            function selectKategori(value, text) {
+                                document.getElementById('kategoriSelectedText').innerText = text;
+                                document.getElementById('filterKategoriValue').value = value;
+                                document.getElementById('kategoriDropdownList').style.display = 'none';
+                                document.getElementById('kategoriSelectBox').classList.remove('active');
+                                clearSearch();
+                            }
+
+                            function toggleLokasiDropdown() {
+                                const dropdown = document.getElementById('lokasiDropdownList');
+                                const box = document.getElementById('lokasiSelectBox');
+                                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+                                box.classList.toggle('active');
+                                document.getElementById('kategoriDropdownList').style.display = 'none';
+                                document.getElementById('statusPeminjamanDropdownList').style.display = 'none';
+                                document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                document.getElementById('resultsDropdown').style.display = 'none';
+                            }
+
+                            function selectLokasi(value, text) {
+                                document.getElementById('lokasiSelectedText').innerText = text;
+                                document.getElementById('hiddenLokasiId').value = value;
+                                document.getElementById('lokasiDropdownList').style.display = 'none';
+                                document.getElementById('lokasiSelectBox').classList.remove('active');
+                            }
+
+                            function toggleStatusPeminjamanDropdown() {
+                                const dropdown = document.getElementById('statusPeminjamanDropdownList');
+                                const box = document.getElementById('statusPeminjamanSelectBox');
+                                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+                                box.classList.toggle('active');
+                                document.getElementById('kategoriDropdownList').style.display = 'none';
+                                document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                document.getElementById('lokasiDropdownList').style.display = 'none';
+                                document.getElementById('resultsDropdown').style.display = 'none';
+                            }
+
+                            function selectStatusPeminjaman(value, text) {
+                                document.getElementById('statusPeminjamanSelectedText').innerText = text;
+                                document.getElementById('hiddenStatusPeminjamanValue').value = value;
+                                document.getElementById('statusPeminjamanDropdownList').style.display = 'none';
+                                document.getElementById('statusPeminjamanSelectBox').classList.remove('active');
+                            }
+
+                            function performSearchSN() {
+                                const query = document.getElementById('serialNumberInput').value.trim();
+                                document.getElementById('hiddenSerialNumberValue').value = query;
+
+                                const dropdown = document.getElementById('resultsSerialNumberDropdown');
+                                dropdown.innerHTML = '';
+
+                                if (query.length < 1 || currentDeviceSNList.length === 0) {
+                                    dropdown.style.display = 'none';
+                                    return;
+                                }
+
+                                const filteredSN = currentDeviceSNList.filter(sn => sn.toLowerCase().includes(query.toLowerCase()));
+
+                                if (filteredSN.length > 0) {
+                                    filteredSN.forEach(sn => {
+                                        const item = document.createElement('div');
+                                        item.className = 'dropdown-item-custom';
+                                        item.innerText = sn;
+                                        item.onclick = () => {
+                                            document.getElementById('serialNumberInput').value = sn;
+                                            document.getElementById('hiddenSerialNumberValue').value = sn;
+                                            dropdown.style.display = 'none';
+                                        };
+                                        dropdown.appendChild(item);
+                                    });
+                                    dropdown.style.display = 'block';
+                                } else {
+                                    dropdown.style.display = 'none';
+                                }
+                            }
+
+                            function clearSearch() {
+                                document.getElementById('searchInput').value = '';
+                                document.getElementById('hiddenPerangkatId').value = '';
+                                document.getElementById('resultsDropdown').style.display = 'none';
+                                document.getElementById('containerSerialNumber').classList.add('d-none');
+                                document.getElementById('serialNumberInput').value = '';
+                                document.getElementById('hiddenSerialNumberValue').value = '';
+                                document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                currentDeviceSNList = [];
+                            }
+
+                            function performSearch() {
+                                const query = document.getElementById('searchInput').value.toLowerCase().trim();
+                                const kategori = document.getElementById('filterKategoriValue').value.trim();
+                                const dropdown = document.getElementById('resultsDropdown');
+
+                                dropdown.innerHTML = '';
+                                document.getElementById('kategoriDropdownList').style.display = 'none';
+                                document.getElementById('statusPeminjamanDropdownList').style.display = 'none';
+                                document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                document.getElementById('lokasiDropdownList').style.display = 'none';
+
+                                if (query.length < 1) { dropdown.style.display = 'none'; return; }
+
+                                const filtered = semuaPerangkat.filter(p => {
+                                    const kat = (p.kategori || p.Kategori || '').trim();
+                                    const nama = p.nama || p.Nama || '';
+                                    const snLaptop = p.snLaptop || p.SnLaptop || '';
+
+                                    const matchKategori = (kategori === "" || kat.toLowerCase() === kategori.toLowerCase());
+                                    const matchNama = nama.toLowerCase().includes(query);
+                                    const matchSn = snLaptop.toLowerCase().includes(query);
+                                    return matchKategori && (matchNama || matchSn);
+                                });
+
+                                if (filtered.length > 0) {
+                                    filtered.forEach(p => {
+                                        const id = p.id || p.Id;
+                                        const nama = p.nama || p.Nama;
+                                        const snLaptop = p.snLaptop || p.SnLaptop;
+
+                                        const item = document.createElement('div');
+                                        item.className = 'dropdown-item-custom';
+
+                                        const productId = "PRD-" + String(id).padStart(3, '0');
+                                        item.innerHTML = window.escapeHtml(nama) + ` <span class="text-muted small">(${window.escapeHtml(productId)})</span>`;
+
+                                        item.onclick = () => {
+                                            document.getElementById('searchInput').value = nama;
+                                            document.getElementById('hiddenPerangkatId').value = id;
+                                            dropdown.style.display = 'none';
+
+                                            const snContainer = document.getElementById('containerSerialNumber');
+                                            const snInput = document.getElementById('serialNumberInput');
+
+                                            if (snLaptop && snLaptop.trim() !== '') {
+                                                snContainer.classList.remove('d-none');
+                                                snInput.value = '';
+                                                document.getElementById('hiddenSerialNumberValue').value = '';
+                                                currentDeviceSNList = snLaptop.split(/,|\n|\r/).map(s => s.trim()).filter(s => s !== '');
+                                            } else {
+                                                snContainer.classList.add('d-none');
+                                                currentDeviceSNList = [];
+                                                snInput.value = '';
+                                                document.getElementById('hiddenSerialNumberValue').value = '';
+                                            }
+                                        };
+                                        dropdown.appendChild(item);
+                                    });
+                                    dropdown.style.display = 'block';
+                                } else {
+                                    dropdown.innerHTML = '<div class="dropdown-item-custom text-muted text-center py-2">Perangkat tidak ditemukan</div>';
+                                    dropdown.style.display = 'block';
+                                }
+                            }
+
+                            document.addEventListener('click', function (e) {
+                                if (!e.target.closest('.custom-dropdown-container') && !e.target.closest('.position-relative')) {
+                                    document.getElementById('kategoriDropdownList').style.display = 'none';
+                                    document.getElementById('statusPeminjamanDropdownList').style.display = 'none';
+                                    document.getElementById('resultsSerialNumberDropdown').style.display = 'none';
+                                    document.getElementById('lokasiDropdownList').style.display = 'none';
+                                    document.getElementById('resultsDropdown').style.display = 'none';
+                                    document.getElementById('kategoriSelectBox')?.classList.remove('active');
+                                    document.getElementById('statusPeminjamanSelectBox')?.classList.remove('active');
+                                    document.getElementById('lokasiSelectBox')?.classList.remove('active');
+                                }
+                            });
+                        </script>
+                    }

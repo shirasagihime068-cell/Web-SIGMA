@@ -1,0 +1,13 @@
+Frontend integration static checks
+=================================
+Root folder renamed to PTK.SIGMA.Web: PASS
+Solution PTK.SIGMA.Web.sln present: PASS
+MVC project PTK.SIGMA.Web/PTK.SIGMA.Web.csproj present: PASS
+Backend API base configured for development: https://localhost:5052
+Frontend HTTPS profile: https://localhost:5051
+Frontend HTTP fallback profile: http://localhost:5050
+No frontend API calls target backend localhost:5000/5001 directly: PASS
+Browser API calls use same-origin /api reverse proxy: PASS
+SignalR configured to use backend HTTPS base: PASS
+Shared auth cookie is configured for Web/API: PASS
+Shared DataProtection application name is configured for Web/API: PASS

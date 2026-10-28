@@ -1,0 +1,278 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Arsip Stock Opname - SIGMA";
+}
+
+<script>
+    window.API_BASE_URL = '@apiBaseUrl';
+</script>
+
+<div class="container py-4 px-3 px-md-4" style="max-width: 1350px;">
+    <!-- CARD ATAS -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3"
+                     style="width: 50px; height: 50px;">
+                    <i class="bi bi-archive-fill text-danger fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark m-0">Arsip & Riwayat Stock Opname Bulanan</h5>
+                    <p class="text-muted small m-0 mt-1" id="periodeSubtitle">Menampilkan data audit historis.</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/Opname/Index"
+                   class="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-dark shadow-sm text-nowrap"
+                   style="font-size: 0.85rem;">
+                    Kembali ke Opname Aktif
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARD TABEL & FILTER ARSIP -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-5">
+        <div class="card-body p-4 p-md-5">
+            <form id="filterArsipForm" onsubmit="handleFilterArsipSubmit(event)" class="row g-3 align-items-end mb-3 archive-filter-toolbar">
+                <div class="col-6 col-md-3">
+                    <label class="form-label text-muted small fw-semibold mb-1">Pilih Bulan Arsip</label>
+                    <select id="selectBulan" name="bulan"
+                            class="form-select rounded-pill shadow-sm bg-light border px-3" style="font-size: 0.85rem;">
+                        <option value="1">Januari</option>
+                        <option value="2">Februari</option>
+                        <option value="3">Maret</option>
+                        <option value="4">April</option>
+                        <option value="5">Mei</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">Agustus</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label text-muted small fw-semibold mb-1">Tahun</label>
+                    <select id="selectTahun" name="tahun"
+                            class="form-select rounded-pill shadow-sm bg-light border px-2"
+                            style="font-size: 0.85rem;"></select>
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2 pt-2">
+                    <button type="submit" id="btnViewArchive"
+                            class="btn btn-primary rounded-pill px-3 btn-sm fw-bold text-white shadow-sm w-50 py-2"
+                            style="font-size: 0.8rem;">
+                        <i class="bi bi-search me-1"></i> Lihat Arsip
+                    </button>
+                    <a id="downloadPdfArsipBtn" href="#"
+                       class="btn btn-primary rounded-pill btn-sm fw-semibold shadow-sm px-3 py-2 w-50 text-nowrap text-center"
+                       style="font-size: 0.8rem;">
+                        <i class="bi bi-file-pdf me-1"></i> Cetak PDF
+                    </a>
+                </div>
+            </form>
+            <div id="arsipFeedback" class="archive-feedback d-none" role="status"></div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-nowrap" style="font-size: 0.85rem;">
+                    <thead class="table-light text-uppercase text-secondary">
+                        <tr>
+                            <th class="text-center py-3 rounded-start-3" style="width: 50px;">No</th>
+                            <th class="py-3">Tanggal Audit</th>
+                            <th class="py-3">Lokasi Rak</th>
+                            <th class="py-3">Nama Perangkat</th>
+                            <th class="text-center py-3">Stok Sistem</th>
+                            <th class="text-center py-3">Stok Fisik</th>
+                            <th class="text-center py-3">Selisih</th>
+                            <th class="text-center py-3">Kondisi</th>
+                            <th class="py-3">Keterangan</th>
+                            <th class="text-center py-3 rounded-end-3">Foto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arsipTableBody">
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-5 fst-italic">Memuat data arsip...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL VIEWER FOTO PENUH ================= -->
+<div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0 shadow-none">
+            <div class="modal-body p-0 position-relative text-center">
+                <button type="button"
+                        class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow-none bg-dark p-2 rounded-circle"
+                        data-bs-dismiss="modal" aria-label="Close" style="z-index: 1055;"></button>
+                <img id="modalFullImage" src="" alt="Foto Ukuran Penuh" class="img-fluid rounded-4 shadow-lg w-100"
+                     style="max-height: 85vh; object-fit: contain; background-color: rgba(255,255,255,0.9);" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let imageViewerModalInstance;
+        const listBulan = {
+            1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+            5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+            9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+        };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const imgModalEl = document.getElementById('imageViewerModal');
+            if (imgModalEl) {
+                document.body.appendChild(imgModalEl);
+                imageViewerModalInstance = new bootstrap.Modal(imgModalEl);
+            }
+
+            // Inisialisasi dropdown tahun (dari 2024 sampai tahun saat ini)
+            const tahunSelect = document.getElementById('selectTahun');
+            const currentYear = new Date().getFullYear();
+            for (let th = currentYear; th >= 2024; th--) {
+                const opt = document.createElement('option');
+                opt.value = th;
+                opt.textContent = th;
+                tahunSelect.appendChild(opt);
+            }
+
+            // Set default ke bulan dan tahun sekarang
+            document.getElementById('selectBulan').value = new Date().getMonth() + 1;
+            tahunSelect.value = currentYear;
+
+            loadArsipData();
+        });
+
+        async function loadArsipData() {
+            const bulan = document.getElementById('selectBulan').value;
+            const tahun = document.getElementById('selectTahun').value;
+            const button = document.getElementById('btnViewArchive');
+            const feedback = document.getElementById('arsipFeedback');
+            const tbody = document.getElementById('arsipTableBody');
+
+            let url = `${window.API_BASE_URL}/api/opname/arsip?bulan=${bulan}&tahun=${tahun}`;
+
+            try {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...';
+                feedback.classList.add('d-none');
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat arsip...</td></tr>';
+                const response = await fetch(url, { credentials: 'include' });
+                if (response.status === 401) {
+                    window.location.href = '/Auth/Login';
+                    return;
+                }
+                if (!response.ok) throw new Error(`Server mengembalikan status ${response.status}.`);
+                const resData = await response.json();
+
+                if (resData && resData.success) {
+                    const dataObj = resData.data;
+                    const targetBulan = dataObj.bulan;
+                    const targetTahun = dataObj.tahun;
+                    const items = dataObj.data || [];
+
+                    const namaBulan = listBulan[targetBulan] || "";
+                    document.getElementById('periodeSubtitle').textContent = `Menampilkan data audit historis periode ${namaBulan} ${targetTahun}.`;
+
+                    // Update PDF Download Link
+                    document.getElementById('downloadPdfArsipBtn').href = `${window.API_BASE_URL}/api/opname/download-pdf?bulan=${targetBulan}&tahun=${targetTahun}`;
+
+                    renderArsipTable(items, targetBulan, targetTahun);
+                    feedback.textContent = `${items.length} data arsip ditemukan untuk ${namaBulan} ${targetTahun}.`;
+                    feedback.className = 'archive-feedback is-success';
+                } else throw new Error(resData?.message || 'Data arsip tidak dapat dimuat.');
+            } catch (error) {
+                console.error('Gagal memuat arsip opname:', error);
+                feedback.textContent = error.message || 'Gagal memuat arsip stock opname.';
+                feedback.className = 'archive-feedback is-error';
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-5"><i class="bi bi-exclamation-circle me-2"></i>Gagal memuat data arsip.</td></tr>';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-search me-1"></i> Lihat Arsip';
+            }
+        }
+
+        function handleFilterArsipSubmit(e) {
+            e.preventDefault();
+            loadArsipData();
+        }
+
+        function renderArsipTable(items, targetBulan, targetTahun) {
+            const tbody = document.getElementById('arsipTableBody');
+            tbody.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                const namaBulan = listBulan[targetBulan] || "";
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-5 fst-italic">Tidak ada data arsip opname untuk periode ${namaBulan} ${targetTahun}.</td></tr>`;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                let tanggalStr = "-";
+                if (item.tanggalOpname) {
+                    const dateObj = new Date(item.tanggalOpname);
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+                    const month = monthNames[dateObj.getMonth()];
+                    const year = dateObj.getFullYear();
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    tanggalStr = `${day} ${month} ${year} ${hours}:${minutes}`;
+                }
+
+                let selisihBadge = `<span class="badge bg-success">0</span>`;
+                if (item.selisih < 0) {
+                    selisihBadge = `<span class="badge bg-danger">${Number(item.selisih || 0)}</span>`;
+                } else if (item.selisih > 0) {
+                    selisihBadge = `<span class="badge bg-warning text-dark">+${Number(item.selisih || 0)}</span>`;
+                }
+
+                let fotoHtml = `<span class="text-muted">-</span>`;
+                if (item.fotoOpname) {
+                    const fotoUrl = resolveOpnameImageUrl(item.fotoOpname);
+                    const encodedFotoUrl = encodeURIComponent(fotoUrl).replace(/'/g, '%27');
+                    fotoHtml = `<a href="#" onclick="event.preventDefault();openImageModal(decodeURIComponent('${encodedFotoUrl}'))" class="btn btn-sm btn-outline-dark rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-image"></i> Lihat
+                        </a>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td class="text-center fw-semibold text-muted">${index + 1}</td>
+                        <td class="text-muted">${tanggalStr}</td>
+                        <td>-</td>
+                        <td class="fw-bold text-dark">${window.escapeHtml(item.namaPerangkat || '-')}</td>
+                        <td class="text-center"><span class="badge bg-secondary">${Number(item.jumlahSistem || 0)}</span></td>
+                        <td class="text-center"><span class="badge bg-info text-dark">${Number(item.jumlahFisik || 0)}</span></td>
+                        <td class="text-center">${selisihBadge}</td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">${window.escapeHtml(item.kondisiFisik || '-')}</span></td>
+                        <td>${window.escapeHtml(item.keterangan || '-')}</td>
+                        <td class="text-center">${fotoHtml}</td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resolveOpnameImageUrl(value) {
+            if (!value) return '';
+            if (/^https?:\/\//i.test(value)) return value;
+            if (value.startsWith('/api/files/')) return value;
+            const fileName = value.replace(/^.*[\\/]/, '');
+            return `${window.API_BASE_URL}/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`;
+        }
+
+        function openImageModal(imageUrl) {
+            document.getElementById('modalFullImage').src = imageUrl;
+            if (imageViewerModalInstance) {
+                imageViewerModalInstance.show();
+            }
+        }
+    </script>
+}

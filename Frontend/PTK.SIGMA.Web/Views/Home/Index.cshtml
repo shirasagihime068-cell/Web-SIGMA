@@ -1,0 +1,1006 @@
+@{
+    ViewData["Title"] = "Sistem Informasi Gudang - SIGMA";
+}
+
+@section Styles {
+    <style>
+        /* CSS Kustom untuk Daftar Serial Number di Modal */
+        .device-spec-header strong {
+            font-size: 1.15rem;
+            color: #063b79;
+        }
+
+        #modal-serials {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-top: 15px;
+        }
+
+        #modal-serials span {
+            display: block;
+            padding: 12px 16px;
+            background-color: #ffffff;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a4a82;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            word-break: break-all;
+        }
+
+        #modal-serials .serial-empty {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            background-color: transparent;
+            border: 1px dashed #ced4da;
+            text-align: center;
+            box-shadow: none;
+            letter-spacing: normal;
+        }
+
+        #modal-serials::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #modal-serials::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #modal-serials::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        #modal-serials::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+}
+
+<div class="dashboard-page">
+    <section class="dashboard-kpi-grid" aria-label="Ringkasan inventaris">
+        <button type="button" class="dashboard-kpi dashboard-kpi-blue" onclick="filterDashboard('', '', '')">
+            <span class="dashboard-kpi-icon"><i class="bi bi-box-seam-fill"></i></span>
+            <span class="dashboard-kpi-copy"><strong>Total Unit Barang</strong><small>Keseluruhan stok
+                inventaris</small></span>
+                <span class="dashboard-kpi-value"><b id="statTotalUnits">0</b><small>Unit</small></span>
+                <span class="dashboard-kpi-trend trend-positive"><i class="bi bi-graph-up-arrow"></i> Data terkini</span>
+                <span class="dashboard-kpi-art"><i class="bi bi-boxes"></i></span>
+            </button>
+            <button type="button" class="dashboard-kpi dashboard-kpi-green" onclick="filterDashboard('', '', '')">
+                <span class="dashboard-kpi-icon"><i class="bi bi-tags-fill"></i></span>
+                <span class="dashboard-kpi-copy"><strong>Kategori Tersedia</strong><small>Jenis perangkat yang
+                    terdaftar</small></span>
+                    <span class="dashboard-kpi-value"><b id="statTotalCategories">0</b><small>Kategori</small></span>
+                    <span class="dashboard-kpi-trend trend-positive"><i class="bi bi-check-circle-fill"></i> Aktif
+                        digunakan</span>
+                        <span class="dashboard-kpi-art"><i class="bi bi-tags"></i></span>
+                    </button>
+                    <button type="button" class="dashboard-kpi dashboard-kpi-red" onclick="filterDashboard('', '', 'rusak')">
+                        <span class="dashboard-kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                        <span class="dashboard-kpi-copy"><strong>Barang Kondisi Rusak</strong><small>Perangkat perlu
+                            ditindaklanjuti</small></span>
+                            <span class="dashboard-kpi-value"><b id="statCriticalItems">0</b><small>Item</small></span>
+                            <span class="dashboard-kpi-trend trend-negative"><i class="bi bi-exclamation-circle-fill"></i> Perlu
+                                perhatian</span>
+                                <span class="dashboard-kpi-art"><i class="bi bi-tools"></i></span>
+                            </button>
+                            <button type="button" class="dashboard-kpi dashboard-kpi-orange"
+                                    onclick="window.location.href='/Peminjaman/Index'">
+                                <span class="dashboard-kpi-icon"><i class="bi bi-box-arrow-right"></i></span>
+                                <span class="dashboard-kpi-copy"><strong>Barang Dipinjam</strong><small>Dalam masa peminjaman</small></span>
+                                <span class="dashboard-kpi-value"><b id="statBorrowedUnits">0</b><small>Unit</small></span>
+                                <span class="dashboard-kpi-trend trend-positive"><i class="bi bi-arrow-left-right"></i> Lihat
+                                    sirkulasi</span>
+                                    <span class="dashboard-kpi-art"><i class="bi bi-box2-heart"></i></span>
+                                </button>
+                            </section>
+
+                            <!-- STATUS KHUSUS TONER -->
+                            <section class="dashboard-status-panel dashboard-panel dashboard-toner-panel" aria-label="Status khusus toner">
+                                <header class="dashboard-status-header">
+                                    <div>
+                                        <span class="panel-icon" style="color:#1477e6;background:rgba(20,119,230,.1);"><i
+                                            class="bi bi-printer-fill"></i></span>
+                                            <div><strong>Status Khusus Toner</strong><small>Pantauan stok Tinta / Toner / Cartridge berdasarkan data
+                                                backend</small></div>
+                                            </div>
+                                        <button type="button" class="dashboard-toner-link"
+                                                onclick="filterDashboard('Tinta / Toner / Cartridge', '', '')">
+                                            <span>Lihat Detail Toner</span><i class="bi bi-arrow-right"></i>
+                                        </button>
+                                        </header>
+                                        <div class="dashboard-status-grid dashboard-toner-grid">
+                                            <button type="button" class="dashboard-status-card status-good"
+                                                    onclick="filterDashboard('Tinta / Toner / Cartridge', '', '')">
+                                                <span class="status-card-icon"><i class="bi bi-droplet-half"></i></span>
+                                                <span class="status-card-copy"><small>Total Stok Toner</small><strong id="statTotalToner">0</strong><em>pcs tercatat di
+                                                    gudang</em></span>
+                                                <span class="status-card-affordance"><i class="bi bi-bar-chart-fill"></i></span>
+                                                </button>
+                                                <button type="button" class="dashboard-status-card status-damaged"
+                                                        onclick="filterDashboard('Tinta / Toner / Cartridge', '', 'low-stock')">
+                                                    <span class="status-card-icon"><i class="bi bi-exclamation-circle-fill"></i></span>
+                                                    <span class="status-card-copy"><small>Stok Menipis</small><strong id="statLowToner">0</strong><em>item perlu segera
+                                                        restock</em></span>
+                                                    <span class="status-card-affordance"><i class="bi bi-chevron-right"></i></span>
+                                                    </button>
+                                                    <button type="button" class="dashboard-status-card status-loan"
+                                                            onclick="filterDashboard('Tinta / Toner / Cartridge', '', '')">
+                                                        <span class="status-card-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                                                        <span class="status-card-copy"><small>Jenis Toner Terdaftar</small><strong id="statTonerTypes">0</strong><em>jenis/model
+                                                            toner</em></span>
+                                                        <span class="status-card-affordance"><i class="bi bi-chevron-right"></i></span>
+                                                        </button>
+                                                    </div>
+                                                </section>
+
+                                                <section class="dashboard-visual-grid">
+                                                    <article class="dashboard-panel dashboard-trend-panel">
+                                                        <header class="dashboard-panel-header">
+                                                            <div><span class="panel-icon"><i class="bi bi-graph-up-arrow"></i></span><strong>Tren Unit
+                                                                Inventaris</strong></div>
+                                                                <select id="trendRangeFilter" class="panel-filter-select" aria-label="Periode tren stok">
+                                                                    <option value="3">3 Bulan Terakhir</option>
+                                                                    <option value="6" selected>6 Bulan Terakhir</option>
+                                                                    <option value="12">12 Bulan Terakhir</option>
+                                                                </select>
+                                                            </header>
+                                                            <div id="stockTrendChart" class="stock-trend-chart"
+                                                                 aria-label="Grafik unit inventaris berdasarkan bulan input">
+                                                                <div class="chart-empty">Memuat visualisasi...</div>
+                                                            </div>
+                                                            <div class="chart-legend"><span><i class="legend-dot legend-total"></i>Total Unit Inventaris</span><span><i
+                                                                class="legend-dot legend-good"></i>Barang Baik</span><span><i
+                                                                class="legend-dot legend-damaged"></i>Barang Rusak</span></div>
+                                                            </article>
+
+                                                            <article class="dashboard-panel dashboard-distribution-panel">
+                                                                <header class="dashboard-panel-header">
+                                                                    <div><span class="panel-icon"><i class="bi bi-pie-chart-fill"></i></span><strong>Distribusi Barang per
+                                                                        Kategori</strong></div>
+                                                                        <select id="distributionCategoryFilter" class="panel-filter-select"
+                                                                                aria-label="Filter distribusi kategori">
+                                                                            <option value="">Semua Kategori</option>
+                                                                        </select>
+                                                                    </header>
+                                                                    <div class="distribution-content">
+                                                                        <div id="categoryDonut" class="category-donut" role="img" aria-label="Diagram distribusi kategori">
+                                                                            <span><b id="donutTotal">0</b><small>Total Unit</small></span>
+                                                                        </div>
+                                                                        <div id="categoryLegend" class="category-legend">
+                                                                            <div class="chart-empty">Memuat kategori...</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </article>
+                                                            </section>
+
+                                                            <section class="dashboard-panel dashboard-inventory-panel">
+                                                                <header class="inventory-panel-header">
+                                                                    <div>
+                                                                        <span class="panel-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                                                                        <div><strong>Daftar Inventaris</strong><small>Temukan dan kelola perangkat gudang</small></div>
+                                                                    </div>
+                                                                </header>
+
+                                                                <form id="searchForm" class="dashboard-filterbar" onsubmit="handleSearchSubmit(event)">
+                                                                    <div class="dashboard-category-filter dropdown">
+                                                                        <label for="categoryDropdownButton">Kategori</label>
+                                                                        <button id="categoryDropdownButton" class="dashboard-filter-control dropdown-toggle" type="button"
+                                                                                data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                                                                            <i class="bi bi-tags"></i><span id="selectedCategoryText">Semua Kategori</span>
+                                                                        </button>
+                                                                        <ul id="categoryDropdownList" class="dropdown-menu dashboard-category-menu">
+                                                                            <li><button class="dropdown-item active-category" type="button"
+                                                                                            onclick="selectCategory('', 'Semua Kategori')">Semua Kategori</button></li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        <div class="dashboard-search-field">
+                                                                            <label for="searchStringInput">Cari perangkat</label>
+                                                                            <div class="dashboard-search-control">
+                                                                                <i class="bi bi-search"></i>
+                                                                                <input type="search" id="searchStringInput"
+                                                                                       placeholder="Nama perangkat, serial number, atau keterangan..." autocomplete="off" />
+                                                                                <span id="searchState" aria-live="polite"></span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button type="submit" class="dashboard-search-button"><i class="bi bi-search"></i><span>Cari</span></button>
+                                                                    </form>
+
+                                                                    <div id="filterAlertBox" class="dashboard-filter-alert d-none">
+                                                                        <span id="filterAlertText"><i class="bi bi-funnel-fill"></i> Menampilkan barang rusak.</span>
+                                                                        <button type="button" onclick="resetFilterRusak()">Reset filter</button>
+                                                                    </div>
+
+                                                                     <div class="inventory-viewbar">
+                                                                         <div class="inventory-result-summary">
+                                                                             <strong id="inventoryCount">0</strong>
+                                                                             <span><b>item</b><small id="inventoryRange">Memuat perangkat inventaris...</small></span>
+                                                                         </div>
+                                                                         <div class="inventory-view-controls">
+                                                                             <div class="inventory-control-group inventory-sort-group">
+                                                                                 <label for="inventorySort">Urutkan</label>
+                                                                                 <select id="inventorySort" class="inventory-sort-select" aria-label="Urutkan daftar inventaris">
+                                                                                     <option value="terbaru">Terbaru</option>
+                                                                                     <option value="terlama">Terlama</option>
+                                                                                     <option value="nama-az">Nama A–Z</option>
+                                                                                     <option value="nama-za">Nama Z–A</option>
+                                                                                     <option value="stok-tertinggi">Stok tertinggi</option>
+                                                                                     <option value="stok-terendah">Stok terendah</option>
+                                                                                 </select>
+                                                                             </div>
+                                                                             <div class="inventory-control-group inventory-page-size-group">
+                                                                                 <label for="inventoryPageSize">Tampilkan</label>
+                                                                                 <select id="inventoryPageSize" class="inventory-page-size" aria-label="Jumlah item per halaman">
+                                                                                     <option value="8" selected>8 per halaman</option>
+                                                                                     <option value="16">16 per halaman</option>
+                                                                                     <option value="24">24 per halaman</option>
+                                                                                 </select>
+                                                                             </div>
+                                                                             <div class="inventory-view-switch" role="group" aria-label="Pilih tampilan inventaris">
+                                                                                 <button type="button" class="inventory-view-button active" data-view="grid"
+                                                                                         onclick="setInventoryView('grid')" title="Kartu 4 kolom" aria-label="Tampilan kartu 4 kolom" aria-pressed="true">
+                                                                                     <i class="bi bi-grid-3x3-gap-fill"></i><span>Grid</span>
+                                                                                 </button>
+                                                                                 <button type="button" class="inventory-view-button" data-view="compact"
+                                                                                         onclick="setInventoryView('compact')" title="Kartu 2 kolom" aria-label="Tampilan kartu 2 kolom" aria-pressed="false">
+                                                                                     <i class="bi bi-grid"></i><span>2 Kolom</span>
+                                                                                 </button>
+                                                                                 <button type="button" class="inventory-view-button" data-view="list"
+                                                                                         onclick="setInventoryView('list')" title="List satu per baris" aria-label="Tampilan list satu per baris" aria-pressed="false">
+                                                                                     <i class="bi bi-view-list"></i><span>List</span>
+                                                                                 </button>
+                                                                             </div>
+                                                                         </div>
+                                                                     </div>
+
+                                                                     <div id="inventoryGridView" class="inventory-card-grid" aria-live="polite"></div>
+                                                                     <div id="inventoryCompactView" class="inventory-compact-grid" aria-live="polite" hidden></div>
+                                                                     <div id="inventoryListView" class="inventory-list-grid" aria-live="polite" hidden></div>
+                                                                     <div id="inventoryTableView" class="table-responsive dashboard-table-wrap" hidden>
+                                                                        <table class="table dashboard-inventory-table align-middle">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                     <th class="text-center">No.</th>
+                                                                                     <th>Informasi Barang</th>
+                                                                                     <th>Kategori</th>
+                                                                                     <th class="text-center">Stok</th>
+                                                                                    <th class="text-center">Kondisi</th>
+                                                                                     <th class="text-center">Tanggal Input</th>
+                                                                                     <th>Lokasi / PIC</th>
+                                                                                    <th class="text-center">Aksi</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody id="inventoryTableBody">
+                                                                                <tr>
+                                                                                     <td colspan="8" class="dashboard-empty">Memuat inventaris...</td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                    <nav class="dashboard-pagination" aria-label="Navigasi halaman inventaris">
+                                                                        <ul id="paginationContainer" class="pagination"></ul>
+                                                                    </nav>
+                                                                </section>
+
+                                                                <section class="dashboard-panel dashboard-activity-panel">
+                                                                    <header class="dashboard-panel-header">
+                                                                        <div><span class="panel-icon panel-icon-red"><i class="bi bi-clock-history"></i></span><strong>Log Aktivitas
+                                                                            Terbaru</strong></div>
+                                                                        </header>
+                                                                        <div class="table-responsive dashboard-table-wrap">
+                                                                            <table class="table dashboard-activity-table align-middle">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th>Waktu</th>
+                                                                                        <th>Pengguna</th>
+                                                                                        <th>Aksi</th>
+                                                                                        <th>Detail</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody id="activityLogTableBody">
+                                                                                    <tr>
+                                                                                        <td colspan="4" class="dashboard-empty">Memuat aktivitas...</td>
+                                                                                    </tr>
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </section>
+                                                                </div>
+
+                                                                @section Modals {
+                                                                    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+                                                                        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                                                                            <div class="modal-content">
+                                                                                <div class="modal-header">
+                                                                                    <div><span class="modal-kicker">Informasi Inventaris</span>
+                                                                                        <h5 class="modal-title" id="detailModalLabel">Detail Perangkat</h5>
+                                                                                    </div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                                                                </div>
+                                                                                <div class="modal-body">
+                                                                                    <div class="device-detail-layout">
+                                                                                        <div class="device-detail-photo">
+                                                                                            <img id="modal-gambar" alt="Foto perangkat" />
+                                                                                            <button type="button" id="modal-image-open" class="device-photo-open" hidden
+                                                                                                    title="Buka foto ukuran penuh"><i class="bi bi-arrows-fullscreen"></i><span>Ukuran
+                                                                                                penuh</span></button>
+                                                                                                <div id="modal-no-gambar"><i class="bi bi-image"></i><span>Foto tidak tersedia</span></div>
+                                                                                            </div>
+                                                                                            <div class="device-detail-content">
+                                                                                                <span id="modal-kategori" class="badge text-bg-primary">Kategori</span>
+                                                                                                <h3 id="modal-nama">Nama Perangkat</h3>
+                                                                                                <dl class="device-detail-list">
+                                                                                                    <div>
+                                                                                                        <dt>Kondisi</dt>
+                                                                                                        <dd id="modal-kondisi">-</dd>
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <dt>Jumlah</dt>
+                                                                                                        <dd id="modal-jumlah">-</dd>
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <dt>Lokasi</dt>
+                                                                                                        <dd id="modal-lokasi">-</dd>
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <dt>Vendor</dt>
+                                                                                                        <dd id="modal-vendor">-</dd>
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <dt>Status</dt>
+                                                                                                        <dd id="modal-status">-</dd>
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <dt>Tanggal Masuk</dt>
+                                                                                                        <dd id="modal-tanggal-masuk">-</dd>
+                                                                                                    </div>
+                                                                                                    <div class="device-detail-wide">
+                                                                                                        <dt>Keterangan</dt>
+                                                                                                        <dd id="modal-keterangan">-</dd>
+                                                                                                    </div>
+                                                                                                </dl>
+                                                                                                <div id="modal-laptop-specs" class="device-laptop-specs d-none">
+                                                                                                    <div class="device-spec-header">
+                                                                                                        <div><strong>Spesifikasi / Serial Number</strong>
+                                                                                                            <p><span id="modal-type">-</span> · <span id="modal-product-id">-</span></p>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                    <div id="modal-serials" aria-label="Daftar serial number"></div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Tutup</button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+
+                                                                    @section Scripts {
+                                                                        <script>
+                                                                            let currentCategory = '';
+                                                                            let currentSearch = '';
+                                                                            let currentFilter = '';
+                                                                            let currentPage = 1;
+                                                                             let currentPageSize = 8;
+                                                                             let currentSort = 'terbaru';
+                                                                             let currentViewMode = 'grid';
+                                                                            let currentUserRole = '';
+                                                                            let dashboardCache = null;
+                                                                             let currentInventoryItems = [];
+                                                                            let searchDebounceTimer;
+                                                                             let dashboardSummaryAbortController;
+                                                                             let dashboardInventoryAbortController;
+                                                                            let lockedTrendBarKey = '';
+                                                                            const chartColors = ['#1477e6', '#22ba79', '#ff9818', '#8c4fe8', '#5b7089', '#10b8c9'];
+
+                                                                            document.addEventListener('DOMContentLoaded', async () => {
+                                                                                const searchInput = document.getElementById('searchStringInput');
+                                                                                searchInput.addEventListener('input', () => {
+                                                                                    window.clearTimeout(searchDebounceTimer);
+                                                                                     dashboardInventoryAbortController?.abort();
+                                                                                     const nextSearch = searchInput.value.trim();
+                                                                                     if (!nextSearch) {
+                                                                                         currentSearch = '';
+                                                                                         loadDashboardData(1);
+                                                                                         return;
+                                                                                     }
+                                                                                    setSearchState('Menunggu...');
+                                                                                    searchDebounceTimer = window.setTimeout(() => {
+                                                                                         currentSearch = nextSearch;
+                                                                                        loadDashboardData(1);
+                                                                                     }, 200);
+                                                                                });
+                                                                                document.getElementById('trendRangeFilter').addEventListener('change', renderVisualizations);
+                                                                                document.getElementById('distributionCategoryFilter').addEventListener('change', renderVisualizations);
+                                                                                 document.getElementById('inventorySort').addEventListener('change', event => {
+                                                                                     currentSort = event.target.value || 'terbaru';
+                                                                                     loadDashboardData(1);
+                                                                                 });
+                                                                                 document.getElementById('inventoryPageSize').addEventListener('change', event => {
+                                                                                     currentPageSize = Number(event.target.value) || 8;
+                                                                                     loadDashboardData(1);
+                                                                                 });
+                                                                                 setInventoryView('grid', false);
+                                                                                bindTrendInteractions();
+                                                                                await loadDashboardData(1);
+                                                                                window.addEventListener('sigma:notification', () => loadDashboardData(currentPage, true));
+                                                                            });
+
+                                                                             async function loadDashboardData(page = 1, refreshSummary = false) {
+                                                                                 const inventoryPromise = loadInventoryData(page);
+                                                                                 const summaryPromise = (refreshSummary || dashboardCache === null)
+                                                                                     ? loadDashboardSummary()
+                                                                                     : Promise.resolve();
+
+                                                                                 // Summary and inventory use separate requests/DbContexts. A
+                                                                                 // search never waits for charts, logs, or KPI aggregation.
+                                                                                 await Promise.allSettled([inventoryPromise, summaryPromise]);
+                                                                             }
+
+                                                                             async function loadDashboardSummary() {
+                                                                                 dashboardSummaryAbortController?.abort();
+                                                                                 const requestController = new AbortController();
+                                                                                 dashboardSummaryAbortController = requestController;
+
+                                                                                 try {
+                                                                                     const response = await fetch('/api/home/summary', {
+                                                                                         credentials: 'include',
+                                                                                         signal: requestController.signal
+                                                                                     });
+                                                                                     if (response.status === 401) { window.location.href = '/Auth/Login'; return; }
+                                                                                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                                                                                     const result = await response.json();
+                                                                                     const dashboard = result?.data || result || {};
+                                                                                     const categories = Array.isArray(dashboard.kategoriList) ? dashboard.kategoriList : [];
+                                                                                     dashboardCache = dashboard;
+                                                                                     currentUserRole = dashboard.isAdmin ? 'Admin' : '';
+                                                                                     updateStats(dashboard, categories.length);
+                                                                                     populateDistributionFilter(dashboard.categoryDistribution || []);
+                                                                                     renderVisualizations();
+                                                                                     renderCategories(categories);
+                                                                                     renderActivityLogs(dashboard.logs || []);
+                                                                                 } catch (error) {
+                                                                                     if (error?.name !== 'AbortError') console.error('Gagal memuat ringkasan dashboard:', error);
+                                                                                 } finally {
+                                                                                     if (dashboardSummaryAbortController === requestController) dashboardSummaryAbortController = null;
+                                                                                 }
+                                                                             }
+
+                                                                             async function loadInventoryData(page = 1) {
+                                                                                 currentPage = Math.max(1, page);
+                                                                                 setSearchState('Memuat...');
+                                                                                 let url = `/api/home/inventory?page=${currentPage}&pageSize=${currentPageSize}&sort=${encodeURIComponent(currentSort)}`;
+                                                                                 if (currentCategory) url += `&category=${encodeURIComponent(currentCategory)}`;
+                                                                                 if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+                                                                                 if (currentFilter) url += `&filter=${encodeURIComponent(currentFilter)}`;
+
+                                                                                 dashboardInventoryAbortController?.abort();
+                                                                                 const requestController = new AbortController();
+                                                                                 dashboardInventoryAbortController = requestController;
+                                                                                 try {
+                                                                                     const response = await fetch(url, { credentials: 'include', signal: requestController.signal });
+                                                                                     if (response.status === 401) { window.location.href = '/Auth/Login'; return; }
+                                                                                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                                                                                     const result = await response.json();
+                                                                                     const inventory = result?.data || result;
+                                                                                     const items = Array.isArray(inventory?.data) ? inventory.data : [];
+                                                                                     const pagination = inventory?.pagination || { totalPages: 1, currentPage, totalItems: items.length };
+                                                                                     currentInventoryItems = items;
+                                                                                     currentPageSize = Number(pagination.pageSize) || currentPageSize;
+                                                                                     currentPage = Number(pagination.currentPage) || currentPage;
+                                                                                     document.getElementById('inventoryPageSize').value = String(currentPageSize);
+                                                                                     renderInventory(items, currentPage);
+                                                                                     renderPagination(pagination.totalPages || 1, pagination.currentPage || currentPage);
+                                                                                     document.getElementById('inventoryCount').textContent = `${pagination.totalItems || 0}`;
+                                                                                     document.getElementById('inventoryRange').textContent = `Menampilkan ${items.length} dari ${pagination.totalItems || 0} perangkat`;
+                                                                                     setSearchState('');
+                                                                                 } catch (error) {
+                                                                                     if (error?.name === 'AbortError') return;
+                                                                                     console.error('Gagal memuat inventaris:', error);
+                                                                                     currentInventoryItems = [];
+                                                                                     renderInventoryError('Data belum dapat dimuat. Silakan coba lagi.');
+                                                                                     setSearchState('Gagal');
+                                                                                 } finally {
+                                                                                     if (dashboardInventoryAbortController === requestController) dashboardInventoryAbortController = null;
+                                                                                 }
+                                                                             }
+
+                                                                            function populateDistributionFilter(rows) {
+                                                                                const select = document.getElementById('distributionCategoryFilter');
+                                                                                const selectedValue = select.value;
+                                                                                select.innerHTML = '<option value="">Semua Kategori</option>' + rows.map(row => `<option value="${escapeHtml(row.name)}">${escapeHtml(row.name)}</option>`).join('');
+                                                                                if ([...select.options].some(option => option.value === selectedValue)) select.value = selectedValue;
+                                                                            }
+
+                                                                            function renderVisualizations() {
+                                                                                if (!dashboardCache) return;
+                                                                                const monthCount = Number(document.getElementById('trendRangeFilter').value) || 6;
+                                                                                const trendRows = Array.isArray(dashboardCache.monthlyTrend) ? dashboardCache.monthlyTrend.slice(-monthCount) : [];
+                                                                                renderTrend(trendRows);
+
+                                                                                const allRows = Array.isArray(dashboardCache.categoryDistribution)
+                                                                                    ? dashboardCache.categoryDistribution.map((row, index) => ({
+                                                                                        ...row,
+                                                                                        chartColor: chartColors[index % chartColors.length]
+                                                                                    }))
+                                                                                    : [];
+                                                                                const selectedCategory = document.getElementById('distributionCategoryFilter').value;
+                                                                                if (selectedCategory) {
+                                                                                    const selectedRows = allRows.filter(row => row.name === selectedCategory);
+                                                                                    renderDistribution(selectedRows, selectedRows.reduce((sum, row) => sum + Number(row.total || 0), 0));
+                                                                                    return;
+                                                                                }
+
+                                                                                const visibleRows = allRows.slice(0, 5);
+                                                                                if (allRows.length > 5) {
+                                                                                    visibleRows.push({
+                                                                                        name: 'Lainnya',
+                                                                                        total: allRows.slice(5).reduce((sum, row) => sum + Number(row.total || 0), 0),
+                                                                                        chartColor: '#71849a'
+                                                                                    });
+                                                                                }
+                                                                                renderDistribution(visibleRows, dashboardCache.totalUnits || 0);
+                                                                            }
+
+                                                                            function updateStats(data, fallbackCategories) {
+                                                                                setText('statTotalUnits', data.totalUnits || 0);
+                                                                                setText('statTotalCategories', data.totalCategories ?? fallbackCategories ?? 0);
+                                                                                setText('statCriticalItems', data.criticalItems || 0);
+                                                                                setText('statBorrowedUnits', data.borrowedUnits || 0);
+
+                                                                                // Status toner
+                                                                                const tonerStats = data.tonerStats || {};
+                                                                                setText('statTotalToner', data.tonerUnits ?? data.totalToner ?? tonerStats.total ?? 0);
+                                                                                setText('statLowToner', data.tonerCritical ?? data.lowToner ?? tonerStats.lowStock ?? 0);
+                                                                                setText('statTonerTypes', data.tonerItems ?? tonerStats.itemTypes ?? 0);
+                                                                            }
+
+                                                                            function renderTrend(rows) {
+                                                                                const host = document.getElementById('stockTrendChart');
+                                                                                lockedTrendBarKey = '';
+                                                                                host.style.gridTemplateColumns = `repeat(${Math.max(rows.length, 1)}, minmax(24px, 1fr))`;
+                                                                                if (!rows.length) { host.innerHTML = '<div class="chart-empty">Belum ada data inventaris pada periode ini.</div>'; return; }
+                                                                                const max = Math.max(1, ...rows.flatMap(row => [row.total || 0, row.good || 0, row.damaged || 0]));
+                                                                                const metrics = [
+                                                                                    { key: 'total', label: 'Total Unit Inventaris', className: 'trend-total', icon: 'bi-boxes' },
+                                                                                    { key: 'good', label: 'Barang Baik', className: 'trend-good', icon: 'bi-check-circle' },
+                                                                                    { key: 'damaged', label: 'Barang Rusak', className: 'trend-damaged', icon: 'bi-exclamation-triangle' }
+                                                                                ];
+
+                                                                                host.innerHTML = rows.map((row, rowIndex) => {
+                                                                                    const rawMonthLabel = String(row.label || '-');
+                                                                                    const fullMonthLabel = row.year ? `${rawMonthLabel} ${row.year}` : rawMonthLabel;
+                                                                                    const monthLabel = escapeHtml(rawMonthLabel);
+                                                                                    const bars = metrics.map(metric => {
+                                                                                        const value = Number(row[metric.key] || 0);
+                                                                                        const height = value > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0;
+                                                                                        const barKey = `${row.period || rowIndex}-${metric.key}`;
+                                                                                        const zeroClass = value === 0 ? ' is-zero' : '';
+                                                                                        return `<button type="button" class="trend-bar-button${zeroClass}" data-trend-key="${barKey}" data-trend-label="${escapeHtml(metric.label)}" data-trend-month="${escapeHtml(fullMonthLabel)}" data-trend-value="${value}" aria-label="${escapeHtml(metric.label)} ${escapeHtml(fullMonthLabel)}: ${value} unit. Klik untuk mengunci detail." aria-pressed="false"><span class="trend-bar-track"><span class="trend-bar ${metric.className}" style="height:${height}%"></span></span><strong class="trend-bar-value">${value}</strong></button>`;
+                                                                                    }).join('');
+                                                                                    return `<div class="trend-month"><div class="trend-bars">${bars}</div><small>${monthLabel}</small></div>`;
+                                                                                }).join('') + '<div id="trendChartTooltip" class="trend-chart-tooltip" role="tooltip" aria-hidden="true"></div>';
+                                                                            }
+
+                                                                            function bindTrendInteractions() {
+                                                                                const host = document.getElementById('stockTrendChart');
+
+                                                                                host.addEventListener('pointerover', event => {
+                                                                                    const bar = event.target.closest('.trend-bar-button');
+                                                                                    if (!bar || (lockedTrendBarKey && lockedTrendBarKey !== bar.dataset.trendKey)) return;
+                                                                                    showTrendTooltip(bar, event);
+                                                                                });
+
+                                                                                host.addEventListener('pointermove', event => {
+                                                                                    const bar = event.target.closest('.trend-bar-button');
+                                                                                    if (!bar || lockedTrendBarKey) return;
+                                                                                    positionTrendTooltip(event);
+                                                                                });
+
+                                                                                host.addEventListener('pointerout', event => {
+                                                                                    if (lockedTrendBarKey || event.relatedTarget?.closest?.('.trend-bar-button')) return;
+                                                                                    hideTrendTooltip();
+                                                                                });
+
+                                                                                host.addEventListener('focusin', event => {
+                                                                                    const bar = event.target.closest('.trend-bar-button');
+                                                                                    if (bar && (!lockedTrendBarKey || lockedTrendBarKey === bar.dataset.trendKey)) showTrendTooltip(bar);
+                                                                                });
+
+                                                                                host.addEventListener('focusout', () => {
+                                                                                    if (!lockedTrendBarKey) hideTrendTooltip();
+                                                                                });
+
+                                                                                host.addEventListener('click', event => {
+                                                                                    const bar = event.target.closest('.trend-bar-button');
+                                                                                    if (!bar) return;
+                                                                                    const nextKey = lockedTrendBarKey === bar.dataset.trendKey ? '' : bar.dataset.trendKey;
+                                                                                    lockedTrendBarKey = nextKey;
+                                                                                    host.querySelectorAll('.trend-bar-button').forEach(item => {
+                                                                                        const isLocked = Boolean(nextKey) && item.dataset.trendKey === nextKey;
+                                                                                        item.classList.toggle('is-locked', isLocked);
+                                                                                        item.setAttribute('aria-pressed', String(isLocked));
+                                                                                    });
+                                                                                    if (nextKey) showTrendTooltip(bar, event, true);
+                                                                                    else hideTrendTooltip();
+                                                                                });
+
+                                                                                host.addEventListener('keydown', event => {
+                                                                                    if (event.key !== 'Escape') return;
+                                                                                    lockedTrendBarKey = '';
+                                                                                    host.querySelectorAll('.trend-bar-button.is-locked').forEach(item => {
+                                                                                        item.classList.remove('is-locked');
+                                                                                        item.setAttribute('aria-pressed', 'false');
+                                                                                    });
+                                                                                    hideTrendTooltip();
+                                                                                });
+                                                                            }
+
+                                                                            function showTrendTooltip(bar, pointerEvent = null, locked = false) {
+                                                                                const tooltip = document.getElementById('trendChartTooltip');
+                                                                                if (!tooltip) return;
+                                                                                tooltip.innerHTML = `<span class="trend-tooltip-kicker"><i class="bi bi-bar-chart-fill"></i>${escapeHtml(bar.dataset.trendMonth || '-')}</span><strong>${escapeHtml(bar.dataset.trendLabel || '-')}</strong><b>${Number(bar.dataset.trendValue || 0).toLocaleString('id-ID')} <small>unit</small></b><span class="trend-tooltip-hint"><i class="bi ${locked || lockedTrendBarKey ? 'bi-lock-fill' : 'bi-cursor-fill'}"></i>${locked || lockedTrendBarKey ? 'Detail dikunci &middot; klik lagi untuk melepas' : 'Klik bar untuk mengunci detail'}</span>`;
+                                                                                tooltip.classList.add('is-visible');
+                                                                                tooltip.setAttribute('aria-hidden', 'false');
+
+                                                                                if (pointerEvent?.clientX) positionTrendTooltip(pointerEvent);
+                                                                                else positionTrendTooltipAtBar(bar);
+                                                                            }
+
+                                                                            function positionTrendTooltip(pointerEvent) {
+                                                                                const bar = pointerEvent.target?.closest?.('.trend-bar-button');
+                                                                                if (bar) positionTrendTooltipAtBar(bar);
+                                                                            }
+
+                                                                            function positionTrendTooltipAtBar(bar) {
+                                                                                const host = document.getElementById('stockTrendChart');
+                                                                                const tooltip = document.getElementById('trendChartTooltip');
+                                                                                const hostBounds = host.getBoundingClientRect();
+                                                                                const barBounds = (bar.querySelector('.trend-bar') || bar).getBoundingClientRect();
+                                                                                const tooltipWidth = tooltip.offsetWidth || 188;
+                                                                                const tooltipHeight = tooltip.offsetHeight || 104;
+                                                                                const gutter = 14;
+                                                                                const availableRight = hostBounds.right - barBounds.right;
+                                                                                const placeRight = availableRight >= tooltipWidth + gutter;
+                                                                                const preferredX = placeRight
+                                                                                    ? (barBounds.right - hostBounds.left) + gutter + (tooltipWidth / 2)
+                                                                                    : (barBounds.left - hostBounds.left) - gutter - (tooltipWidth / 2);
+                                                                                const x = Math.min(Math.max(preferredX, (tooltipWidth / 2) + 8), hostBounds.width - (tooltipWidth / 2) - 8);
+                                                                                const anchorCenterY = (barBounds.top - hostBounds.top) + (barBounds.height / 2);
+                                                                                const y = Math.min(Math.max(anchorCenterY - (tooltipHeight / 2), 8), hostBounds.height - tooltipHeight - 8);
+                                                                                tooltip.style.left = `${x}px`;
+                                                                                tooltip.style.top = `${y}px`;
+                                                                            }
+
+                                                                            function hideTrendTooltip() {
+                                                                                const tooltip = document.getElementById('trendChartTooltip');
+                                                                                if (!tooltip) return;
+                                                                                tooltip.classList.remove('is-visible');
+                                                                                tooltip.setAttribute('aria-hidden', 'true');
+                                                                            }
+
+                                                                            function renderDistribution(rows, totalUnits) {
+                                                                                const donut = document.getElementById('categoryDonut');
+                                                                                const legend = document.getElementById('categoryLegend');
+                                                                                const total = Number(totalUnits) || rows.reduce((sum, row) => sum + Number(row.total || 0), 0);
+                                                                                setText('donutTotal', total);
+                                                                                if (!rows.length || total === 0) { donut.style.background = '#e8eff6'; legend.innerHTML = '<div class="chart-empty">Belum ada kategori.</div>'; return; }
+                                                                                let progress = 0;
+                                                                                const segments = rows.map((row, index) => {
+                                                                                    const start = progress;
+                                                                                    progress += (Number(row.total || 0) / total) * 100;
+                                                                                    return `${row.chartColor || chartColors[index % chartColors.length]} ${start}% ${progress}%`;
+                                                                                });
+                                                                                if (progress < 100) segments.push(`#e8eff6 ${progress}% 100%`);
+                                                                                donut.style.background = `conic-gradient(${segments.join(',')})`;
+                                                                                legend.innerHTML = rows.map((row, index) => {
+                                                                                    const percentage = total ? ((Number(row.total || 0) / total) * 100).toFixed(1) : '0.0';
+                                                                                    const rowColor = row.chartColor || chartColors[index % chartColors.length];
+                                                                                    return `<div class="category-legend-row" style="--category-color:${rowColor}"><i></i><span title="${escapeHtml(row.name)}">${escapeHtml(row.name)}</span><b>${Number(row.total || 0).toLocaleString('id-ID')} <em>unit</em></b><small>${percentage}%</small></div>`;
+                                                                                }).join('');
+                                                                            }
+
+                                                                            function setInventoryView(mode, announce = true) {
+                                                                                const allowedModes = ['grid', 'compact', 'list'];
+                                                                                currentViewMode = allowedModes.includes(mode) ? mode : 'grid';
+                                                                                const views = {
+                                                                                    grid: document.getElementById('inventoryGridView'),
+                                                                                    compact: document.getElementById('inventoryCompactView'),
+                                                                                    list: document.getElementById('inventoryListView')
+                                                                                };
+                                                                                Object.entries(views).forEach(([key, element]) => {
+                                                                                    if (element) element.hidden = key !== currentViewMode;
+                                                                                });
+                                                                                document.querySelectorAll('.inventory-view-button').forEach(button => {
+                                                                                    const active = button.dataset.view === currentViewMode;
+                                                                                    button.classList.toggle('active', active);
+                                                                                    button.setAttribute('aria-pressed', String(active));
+                                                                                });
+                                                                                if (announce) {
+                                                                                    const labels = { grid: 'Grid 4 kolom', compact: 'Kartu 2 kolom', list: 'List satu per baris' };
+                                                                                    setSearchState(labels[currentViewMode]);
+                                                                                    if (currentInventoryItems.length) renderInventory(currentInventoryItems, currentPage);
+                                                                                }
+                                                                            }
+
+                                                                            function getInventoryViewModel(item, index, page) {
+                                                                                const condition = item.kondisi?.trim() || 'Baik';
+                                                                                const conditionText = condition.toLowerCase();
+                                                                                const damaged = conditionText.includes('rusak') && !conditionText.includes('baik');
+                                                                                const createdAt = item.createdAt ? new Date(item.createdAt) : null;
+                                                                                const validDate = createdAt && !Number.isNaN(createdAt.getTime());
+                                                                                return {
+                                                                                    id: Number(item.id) || 0,
+                                                                                    index,
+                                                                                    number: ((page - 1) * currentPageSize) + index + 1,
+                                                                                    name: item.nama || '-',
+                                                                                    category: item.kategori || 'Perangkat ICT Operation',
+                                                                                    condition,
+                                                                                    damaged,
+                                                                                    serial: item.snLaptop || 'SN belum tersedia',
+                                                                                    quantity: Number(item.jumlah) || 0,
+                                                                                    unit: item.kategori === 'Tinta / Toner / Cartridge' ? 'Pcs' : 'Unit',
+                                                                                    location: item.namaLokasi || item.lokasi?.namaLokasi || 'Lokasi belum diatur',
+                                                                                    note: item.keterangan || 'Tanpa keterangan',
+                                                                                    date: validDate ? createdAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+                                                                                    imageUrl: resolveImage(item.dokumentasi)
+                                                                                };
+                                                                            }
+
+                                                                            function renderInventoryImage(model) {
+                                                                                if (!model.imageUrl) {
+                                                                                    return '<span class="device-image-fallback"><i class="bi bi-image"></i><small>Belum ada foto</small></span>';
+                                                                                }
+                                                                                return `<img src="${escapeHtml(model.imageUrl)}" alt="Foto ${escapeHtml(model.name)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="device-image-fallback" hidden><i class="bi bi-image"></i><small>Foto tidak tersedia</small></span>`;
+                                                                            }
+
+                                                                            function renderInventoryActions(model, labels = true) {
+                                                                                const labelClass = labels ? '' : ' class="visually-hidden"';
+                                                                                const adminActions = currentUserRole.toLowerCase() === 'admin'
+                                                                                    ? `<a class="inventory-action-edit" href="/Perangkat/Edit?id=${model.id}" onclick="event.stopPropagation()" title="Edit"><i class="bi bi-pencil-square"></i><span${labelClass}>Edit</span></a><button class="inventory-action-delete" type="button" onclick="event.stopPropagation(); deletePerangkat(${model.id})" title="Hapus"><i class="bi bi-trash3"></i><span${labelClass}>Hapus</span></button>`
+                                                                                    : '';
+                                                                                return `<div class="inventory-item-actions" onclick="event.stopPropagation()"><button class="inventory-action-view" type="button" onclick="openDetailModalByIndex(${model.index})" title="Lihat detail"><i class="bi bi-eye"></i><span${labelClass}>Lihat</span></button>${adminActions}</div>`;
+                                                                            }
+
+                                                                            function renderInventory(items, page) {
+                                                                                const grid = document.getElementById('inventoryGridView');
+                                                                                const compact = document.getElementById('inventoryCompactView');
+                                                                                const list = document.getElementById('inventoryListView');
+                                                                                const tbody = document.getElementById('inventoryTableBody');
+                                                                                if (!items.length) {
+                                                                                    const empty = '<div class="inventory-empty-state"><i class="bi bi-inbox"></i><strong>Data tidak ditemukan</strong><span>Ubah kata kunci atau kategori pencarian.</span></div>';
+                                                                                    grid.innerHTML = currentViewMode === 'grid' ? empty : '';
+                                                                                    compact.innerHTML = currentViewMode === 'compact' ? empty : '';
+                                                                                    list.innerHTML = currentViewMode === 'list' ? empty : '';
+                                                                                    tbody.innerHTML = '';
+                                                                                    return;
+                                                                                }
+
+                                                                                const models = items.map((item, index) => getInventoryViewModel(item, index, page));
+                                                                                grid.innerHTML = currentViewMode === 'grid' ? models.map(model => `
+                                                                                    <article class="inventory-product-card" data-item-index="${model.index}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(model.name)}">
+                                                                                        <div class="inventory-product-media">
+                                                                                            ${renderInventoryImage(model)}
+                                                                                            <span class="inventory-card-condition ${model.damaged ? 'is-damaged' : 'is-good'}"><i class="bi ${model.damaged ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'}"></i>${escapeHtml(model.condition)}</span>
+                                                                                            <span class="inventory-card-number">${model.number}</span>
+                                                                                        </div>
+                                                                                        <div class="inventory-product-body">
+                                                                                            <span class="dashboard-category-badge">${escapeHtml(model.category)}</span>
+                                                                                            <strong class="inventory-product-name">${escapeHtml(model.name)}</strong>
+                                                                                            <span class="inventory-product-serial">SN : ${escapeHtml(model.serial)}</span>
+                                                                                            <div class="inventory-product-meta">
+                                                                                                <span class="inventory-meta-item"><i class="bi bi-box-seam"></i><span><small>Jumlah</small><b>${model.quantity} ${model.unit}</b></span></span>
+                                                                                                <span class="inventory-meta-item"><i class="bi bi-geo-alt-fill"></i><span><small>Lokasi</small><b>${escapeHtml(model.location)}</b></span></span>
+                                                                                            </div>
+                                                                                            <div class="inventory-secondary-row">
+                                                                                                <span class="inventory-meta-item inventory-meta-date"><i class="bi bi-calendar3"></i><span><small>Tanggal</small><b>${escapeHtml(model.date)}</b></span></span>
+                                                                                                <span class="inventory-product-note"><i class="bi bi-info-circle"></i><span><small>Keterangan</small><b>${escapeHtml(model.note)}</b></span></span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <footer>${renderInventoryActions(model, true)}</footer>
+                                                                                    </article>`).join('') : '';
+
+                                                                                compact.innerHTML = currentViewMode === 'compact' ? models.map(model => `
+                                                                                    <article class="inventory-compact-card" data-item-index="${model.index}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(model.name)}">
+                                                                                        <span class="inventory-compact-number">${model.number}</span>
+                                                                                        <div class="inventory-compact-image">${renderInventoryImage(model)}</div>
+                                                                                        <div class="inventory-compact-copy">
+                                                                                            <div class="inventory-compact-topline"><span class="dashboard-category-badge">${escapeHtml(model.category)}</span><time>Tanggal · ${escapeHtml(model.date)}</time></div>
+                                                                                            <strong>${escapeHtml(model.name)}</strong>
+                                                                                            <span class="inventory-product-serial">SN : ${escapeHtml(model.serial)}</span>
+                                                                                            <div class="inventory-product-meta"><span class="inventory-meta-item"><i class="bi bi-box-seam"></i><span><small>Jumlah</small><b>${model.quantity} ${model.unit}</b></span></span><span class="inventory-meta-item"><i class="bi bi-geo-alt-fill"></i><span><small>Lokasi</small><b>${escapeHtml(model.location)}</b></span></span></div>
+                                                                                            <span class="inventory-product-note"><i class="bi bi-info-circle"></i>${escapeHtml(model.note)}</span>
+                                                                                        </div>
+                                                                                        <div class="inventory-compact-side">
+                                                                                            <span class="inventory-card-condition ${model.damaged ? 'is-damaged' : 'is-good'}">${escapeHtml(model.condition)}</span>
+                                                                                            ${renderInventoryActions(model, false)}
+                                                                                        </div>
+                                                                                    </article>`).join('') : '';
+
+                                                                                list.innerHTML = currentViewMode === 'list' ? models.map(model => `
+                                                                                    <article class="inventory-list-card" data-item-index="${model.index}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(model.name)}">
+                                                                                        <span class="inventory-list-number">${model.number}</span>
+                                                                                        <div class="inventory-list-image">${renderInventoryImage(model)}</div>
+                                                                                        <div class="inventory-list-copy">
+                                                                                            <div class="inventory-list-heading"><span class="dashboard-category-badge">${escapeHtml(model.category)}</span></div>
+                                                                                            <strong>${escapeHtml(model.name)}</strong>
+                                                                                            <span class="inventory-product-serial">SN : ${escapeHtml(model.serial)}</span>
+                                                                                            <div class="inventory-product-meta"><span class="inventory-meta-item"><i class="bi bi-box-seam"></i><span><small>Jumlah</small><b>${model.quantity} ${model.unit}</b></span></span><span class="inventory-meta-item"><i class="bi bi-geo-alt-fill"></i><span><small>Lokasi</small><b>${escapeHtml(model.location)}</b></span></span></div>
+                                                                                            <span class="inventory-product-note"><i class="bi bi-info-circle"></i>${escapeHtml(model.note)}</span>
+                                                                                        </div>
+                                                                                        <div class="inventory-list-side">
+                                                                                            <div class="inventory-list-side-top"><time>Tanggal - ${escapeHtml(model.date)}</time><span class="inventory-card-condition ${model.damaged ? 'is-damaged' : 'is-good'}">${escapeHtml(model.condition)}</span></div>
+                                                                                            ${renderInventoryActions(model, false)}
+                                                                                        </div>
+                                                                                    </article>`).join('') : '';
+
+                                                                                tbody.innerHTML = '';
+                                                                                bindInventoryItemInteractions();
+                                                                            }
+
+                                                                            function renderInventoryError(message) {
+                                                                                const content = `<div class="inventory-empty-state is-error"><i class="bi bi-exclamation-circle"></i><strong>Gagal memuat inventaris</strong><span>${escapeHtml(message)}</span></div>`;
+                                                                                document.getElementById('inventoryGridView').innerHTML = content;
+                                                                                document.getElementById('inventoryCompactView').innerHTML = content;
+                                                                                document.getElementById('inventoryListView').innerHTML = content;
+                                                                                document.getElementById('inventoryTableBody').innerHTML = `<tr><td colspan="8" class="dashboard-empty dashboard-error">${escapeHtml(message)}</td></tr>`;
+                                                                            }
+
+                                                                            function bindInventoryItemInteractions() {
+                                                                                document.querySelectorAll('[data-item-index].inventory-product-card, [data-item-index].inventory-compact-card, [data-item-index].inventory-list-card, .dashboard-item-row[data-item-index]').forEach(element => {
+                                                                                    element.addEventListener('click', event => {
+                                                                                        if (event.target.closest('a, button')) return;
+                                                                                        openDetailModalByIndex(Number(element.dataset.itemIndex));
+                                                                                    });
+                                                                                    element.addEventListener('keydown', event => {
+                                                                                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                                                                                        if (event.target.closest('a, button')) return;
+                                                                                        event.preventDefault();
+                                                                                        openDetailModalByIndex(Number(element.dataset.itemIndex));
+                                                                                    });
+                                                                                });
+                                                                            }
+
+                                                                            function openDetailModalByIndex(index) {
+                                                                                const item = currentInventoryItems[index];
+                                                                                if (item) openDetailModal(item);
+                                                                            }
+
+                                                                            function renderPagination(totalPages, page) {
+                                                                                const container = document.getElementById('paginationContainer');
+                                                                                if (totalPages <= 1) { container.innerHTML = ''; return; }
+                                                                                const pages = [];
+                                                                                const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                                                                                const end = Math.min(totalPages, start + 4);
+                                                                                pages.push(`<li class="page-item ${page === 1 ? 'disabled' : ''}"><button class="page-link" type="button" onclick="loadDashboardData(${page - 1})"><i class="bi bi-chevron-left"></i><span>Prev</span></button></li>`);
+                                                                                for (let value = start; value <= end; value++) pages.push(`<li class="page-item ${value === page ? 'active' : ''}"><button class="page-link" type="button" onclick="loadDashboardData(${value})">${value}</button></li>`);
+                                                                                pages.push(`<li class="page-item ${page === totalPages ? 'disabled' : ''}"><button class="page-link" type="button" onclick="loadDashboardData(${page + 1})"><span>Next</span><i class="bi bi-chevron-right"></i></button></li>`);
+                                                                                container.innerHTML = pages.join('');
+                                                                            }
+
+                                                                            function renderCategories(categories) {
+                                                                                const list = document.getElementById('categoryDropdownList');
+                                                                                const buttons = [{ value: '', label: 'Semua Kategori' }, ...categories.map(value => ({ value, label: value }))];
+                                                                                list.innerHTML = buttons.map(item => `<li><button class="dropdown-item ${item.value === currentCategory ? 'active-category' : ''}" type="button" data-value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</button></li>`).join('');
+                                                                                list.querySelectorAll('button').forEach(button => button.addEventListener('click', () => selectCategory(button.dataset.value, button.textContent.trim())));
+                                                                            }
+
+                                                                            async function renderActivityLogs(logs) {
+                                                                                const tbody = document.getElementById('activityLogTableBody');
+                                                                                if (typeof replaceNotificationItemIds === 'function') logs = await replaceNotificationItemIds(logs);
+                                                                                if (!logs?.length) { tbody.innerHTML = '<tr><td colspan="4" class="dashboard-empty">Belum ada aktivitas terbaru.</td></tr>'; return; }
+                                                                                tbody.innerHTML = logs.slice(0, 8).map(log => {
+                                                                                    const time = new Date(log.waktu || log.Waktu).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                                                                    const action = log.aksi || log.Aksi || 'Aktivitas';
+                                                                                    const target = log.target || log.Target || '';
+                                                                                    const detail = log.detail || log.Detail || '-';
+                                                                                    const tone = getActivityTone(`${action} ${target} ${detail}`);
+                                                                                    return `<tr class="activity-log-row activity-log-${tone}"><td class="text-nowrap">${escapeHtml(time)}</td><td><strong>${escapeHtml(log.actorDisplay || log.ActorDisplay || 'System')}</strong></td><td><span class="activity-action-badge activity-${tone}">${escapeHtml(`${action}${target}`.trim())}</span></td><td>${escapeHtml(detail)}</td></tr>`;
+                                                                                }).join('');
+                                                                            }
+
+                                                                            function getActivityTone(value) {
+                                                                                const text = String(value || '').toLowerCase();
+                                                                                if (/(terlambat|ditolak|menolak|tolak|gagal|dihapus|menghapus|hapus|rusak)/.test(text)) return 'danger';
+                                                                                if (/(disetujui|menyetujui|setujui|memvalidasi|berhasil|selesai|dikembalikan|kembali)/.test(text)) return 'success';
+                                                                                if (/(menunggu|pending|jatuh tempo|peringatan)/.test(text)) return 'warning';
+                                                                                if (/(menambahkan|tambah|dibuat|masuk|memperbarui|mengubah|edit)/.test(text)) return 'info';
+                                                                                return 'neutral';
+                                                                            }
+
+                                                                            function selectCategory(value, label) {
+                                                                                currentCategory = value || '';
+                                                                                document.getElementById('selectedCategoryText').textContent = label || 'Semua Kategori';
+                                                                                loadDashboardData(1);
+                                                                            }
+
+                                                                            function handleSearchSubmit(event) {
+                                                                                event.preventDefault();
+                                                                                window.clearTimeout(searchDebounceTimer);
+                                                                                currentSearch = document.getElementById('searchStringInput').value.trim();
+                                                                                loadDashboardData(1);
+                                                                            }
+    
+                                                                            // --- FUNGSI FILTER DASHBOARD YANG SUDAH DIPERBARUI ---
+                                                                            function filterDashboard(category, search, filter) {
+                                                                                currentCategory = category || '';
+                                                                                currentSearch = search || '';
+                                                                                currentFilter = filter || '';
+                                                                                document.getElementById('selectedCategoryText').textContent = currentCategory || 'Semua Kategori';
+        
+                                                                                // Logika dinamis untuk menampilkan teks alert berdasarkan filter aktif
+                                                                                const alertText = document.getElementById('filterAlertText');
+                                                                                if (currentFilter === 'rusak') {
+                                                                                    alertText.innerHTML = '<i class="bi bi-funnel-fill"></i> Menampilkan barang kondisi rusak.';
+                                                                                } else if (currentFilter === 'low-stock') {
+                                                                                    alertText.innerHTML = '<i class="bi bi-funnel-fill"></i> Menampilkan item dengan stok menipis.';
+                                                                                }
+
+                                                                                document.getElementById('filterAlertBox').classList.toggle('d-none', !currentFilter);
+                                                                                loadDashboardData(1);
+                                                                                document.querySelector('.dashboard-inventory-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                                            }
+                                                                            // -----------------------------------------------------
+
+                                                                            function resetFilterRusak() {
+                                                                                currentFilter = '';
+                                                                                document.getElementById('filterAlertBox').classList.add('d-none');
+                                                                                loadDashboardData(1);
+                                                                            }
+
+                                                                            async function deletePerangkat(id) {
+                                                                                const confirmation = await Swal.fire({ title: 'Arsipkan perangkat?', text: 'Perangkat akan dipindahkan ke arsip inventaris.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, arsipkan', cancelButtonText: 'Batal', confirmButtonColor: '#ed1b2f' });
+                                                                                if (!confirmation.isConfirmed) return;
+                                                                                const response = await fetch(`/api/perangkat/${id}`, { method: 'DELETE', credentials: 'include' });
+                                                                                if (response.ok) { await Swal.fire('Berhasil', 'Perangkat dipindahkan ke arsip.', 'success'); loadDashboardData(currentPage, true); }
+                                                                                else Swal.fire('Gagal', 'Perangkat belum dapat diarsipkan.', 'error');
+                                                                            }
+
+                                                                            function openDetailModal(item) {
+                                                                                const imageUrl = resolveImage(item.dokumentasi);
+                                                                                setText('modal-nama', item.nama || '-'); setText('modal-kategori', item.kategori || 'Perangkat ICT Operation'); setText('modal-kondisi', item.kondisi || 'Baik');
+                                                                                setText('modal-jumlah', `${item.jumlah || 0} ${item.kategori === 'Tinta / Toner / Cartridge' ? 'Pcs' : 'Unit'}`); setText('modal-lokasi', item.namaLokasi || item.lokasi?.namaLokasi || '-');
+                                                                                setText('modal-vendor', item.namaVendor || '-'); setText('modal-status', item.statusSewa || '-'); setText('modal-keterangan', item.keterangan || '-');
+                                                                                setText('modal-tanggal-masuk', item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-');
+                                                                                const image = document.getElementById('modal-gambar');
+                                                                                const fallback = document.getElementById('modal-no-gambar');
+                                                                                const imageOpen = document.getElementById('modal-image-open');
+                                                                                image.hidden = !imageUrl;
+                                                                                fallback.hidden = Boolean(imageUrl);
+                                                                                imageOpen.hidden = !imageUrl;
+                                                                                if (imageUrl) {
+                                                                                    image.src = imageUrl;
+                                                                                    image.onerror = () => { image.hidden = true; fallback.hidden = false; imageOpen.hidden = true; };
+                                                                                    imageOpen.onclick = () => window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                                                                                }
+                                                                                const laptop = String(item.kategori || '').toLowerCase().includes('laptop');
+                                                                                const specs = document.getElementById('modal-laptop-specs');
+                                                                                specs.classList.toggle('d-none', !laptop);
+                                                                                if (laptop) {
+                                                                                    setText('modal-type', item.typeLaptop || '-');
+                                                                                    setText('modal-product-id', item.productId || '-');
+                                                                                    const serials = String(item.snLaptop || '').split(/[,;\n]+/).map(value => value.trim()).filter(Boolean);
+                                                                                    document.getElementById('modal-serials').innerHTML = serials.length
+                                                                                        ? serials.map(value => `<span>${escapeHtml(value)}</span>`).join('')
+                                                                                        : '<span class="serial-empty">Serial number belum tersedia</span>';
+                                                                                }
+                                                                                bootstrap.Modal.getOrCreateInstance(document.getElementById('detailModal')).show();
+                                                                            }
+
+                                                                            function resolveImage(value) { if (!value) return ''; if (/^https?:\/\//i.test(value) || value.startsWith('/api/files/')) return value; const fileName = value.replace(/^.*[\\/]/, ''); return `/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`; }
+                                                                            function setText(id, value) { const node = document.getElementById(id); if (node) node.textContent = value; }
+                                                                            function setSearchState(value) { setText('searchState', value); }
+                                                                            function escapeHtml(value) { return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;'); }
+                                                                        </script>
+                                                                    }

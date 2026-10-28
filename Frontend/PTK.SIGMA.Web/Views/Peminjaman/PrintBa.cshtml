@@ -1,0 +1,418 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    Layout = null;
+    ViewData["Title"] = "Berita Acara - SIGMA";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="pageTitle">SIGMA (Sistem Informasi Gudang dan Manajemen)</title>
+    <!-- Bootstrap & Font -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css">
+    <style>
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #e9ecef;
+                color: #000;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            /* SETTING UKURAN A4 UNTUK PREVIEW */
+            .print-container {
+                background: #fff;
+                width: 210mm;
+                min-height: 297mm;
+                margin: 20px auto;
+                padding: 20mm;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                box-sizing: border-box;
+            }
+
+            /* TABEL DATA PERANGKAT */
+            .table-custom th,
+            .table-custom td {
+                border: 1px solid #000 !important;
+                padding: 8px 10px;
+                vertical-align: middle;
+                font-size: 12px;
+            }
+
+            .table-custom th {
+                background-color: #f0f0f0 !important;
+                text-align: center;
+                font-weight: bold;
+            }
+
+            /* KOP SURAT (HEADER BOX) */
+            .header-box {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            .header-box td {
+                border: 1px solid #000;
+                vertical-align: middle;
+            }
+
+            /* STYLING UNTUK TEKS YANG BISA DIEDIT */
+            .editable-text {
+                border: 1px dashed transparent;
+                border-radius: 4px;
+                padding: 2px 4px;
+                outline: none;
+                display: inline-block;
+                transition: all 0.2s;
+                min-width: 50px;
+            }
+
+            .editable-text:hover,
+            .editable-text:focus {
+                border-color: #0d6efd;
+                background-color: rgba(13, 110, 253, 0.05);
+                cursor: text;
+            }
+
+            .editable-block {
+                display: block;
+                width: 100%;
+            }
+
+            /* SETTING UKURAN A4 SAAT DICETAK (PRINT) */
+            @@media print {
+                @@page {
+                    size: A4 portrait;
+                    margin: 0;
+                }
+
+                body {
+                    background-color: #fff !important;
+                }
+
+                .print-container {
+                    box-shadow: none !important;
+                    margin: 0 auto !important;
+                    padding: 15mm !important;
+                    width: 210mm !important;
+                    min-height: 297mm !important;
+                }
+
+                .no-print {
+                    display: none !important;
+                }
+
+                .editable-text {
+                    border: none !important;
+                    background-color: transparent !important;
+                    padding: 0 !important;
+                }
+            }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR / TOMBOL AKSI BROWSER (Hanya tampil di layar) -->
+    <div
+        class="bg-dark bg-opacity-75 p-3 no-print d-flex justify-content-between align-items-center mb-4 sticky-top shadow-sm">
+        <div class="text-white fw-bold ms-3" style="font-size: 0.95rem;">Pratinjau Berita Acara -
+            Ukuran A4</div>
+            <div class="d-flex align-items-center gap-2 me-3">
+                <a href="/Peminjaman/Index"
+                   class="btn btn-light btn-sm rounded-pill px-3 fw-semibold text-decoration-none">Kembali</a>
+                <button onclick="window.print()" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold border-0"
+                        style="background-color: #ED1B24;">Cetak / PDF</button>
+            </div>
+        </div>
+
+        <!-- HALAMAN KERTAS A4 -->
+        <div class="print-container">
+
+            <!-- LOGO PERTAMINA (DI LUAR HEADER BOX, SEBELAH KANAN) -->
+            <div class="mb-3 text-end">
+                <img src="/assets/logo-print.png" alt="Logo Pertamina" style="max-height: 45px; max-width: 100%;">
+            </div>
+
+            <!-- KOP / HEADER FORMULIR -->
+            <table class="header-box mb-4">
+                <tr>
+                    <td class="text-center fw-bold" id="headerText"
+                        style="font-size: 14px; line-height: 1.4; padding: 12px;">
+                        Formulir Berita Acara<br>Serah Terima 
+                    </td>
+                </tr>
+            </table>
+
+            <!-- NOMOR BAST (DI TENGAH, BOLD, & MIRING) -->
+            <div class="mb-4 text-center" style="font-size: 14px;">
+                <span class="fw-bold">No.</span>
+                <span id="lblNoBa"
+                      style="display: inline-block; min-width: 250px; border-bottom: 1px dotted #000; text-align: center; font-weight: bold; font-style: italic; padding-bottom: 2px;">-</span>
+            </div>
+
+            <!-- PIHAK PERTAMA / PEMINJAM (OTOMATIS DARI DATABASE FORMULIR) -->
+            <div class="mb-3" style="font-size: 12px;">
+                <p class="mb-2">Yang bertanda tangan di bawah ini,</p>
+                <table class="w-100 ms-3" style="font-size: 12px;">
+                    <tr>
+                        <td width="15%" class="py-1">Nama</td>
+                        <td width="3%" class="py-1">:</td>
+                        <td width="82%" class="py-1 border-bottom border-dark border-opacity-50 fw-bold"
+                            id="lblNamaPeminjam">
+                            Memuat...
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-1">Jabatan</td>
+                        <td class="py-1">:</td>
+                        <td class="py-1 border-bottom border-dark border-opacity-50" id="lblJabatan">
+                            Memuat...
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-1">Fungsi</td>
+                        <td class="py-1">:</td>
+                        <td class="py-1 border-bottom border-dark border-opacity-50" id="lblFungsi">
+                            Memuat...
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-1">Lokasi Barang</td>
+                        <td class="py-1">:</td>
+                        <td class="py-1 border-bottom border-dark border-opacity-50" id="lblLokasi">
+                            Memuat...
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- KALIMAT PENYERAHAN & TANGGAL OTOMATIS BERDASARKAN HARI INI -->
+            <div class="mb-3 mt-4" style="font-size: 12px; text-align: justify; line-height: 1.5;" id="lblTanggalKalimat">
+                Memuat tanggal...
+            </div>
+
+            <!-- TABEL RINCIAN PERANGKAT -->
+            <table class="table table-custom mb-3 mt-2">
+                <thead>
+                    <tr>
+                        <th width="6%">No.</th>
+                        <th width="34%">Nama Perangkat</th>
+                        <th width="12%">Jumlah Unit</th>
+                        <th width="28%">Keterangan</th>
+                        <th width="20%">Serial Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center fw-semibold align-middle">1</td>
+                        <td class="fw-bold align-middle" id="lblNamaPerangkat">-</td>
+                        <td class="text-center align-middle" id="lblJumlah">0</td>
+                        <td class="align-middle" id="lblKeterangan">-</td>
+                        <td class="align-middle" id="lblSerialNumber">-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- KALIMAT PENGEMBALIAN BARANG -->
+            <p class="mb-4 text-justify" style="font-size: 12px; text-align: justify; line-height: 1.5; display: none;"
+               id="lblKalimatPengembalian">
+                Memuat ketentuan pengembalian...
+            </p>
+
+            <!-- KALIMAT PENUTUP -->
+            <p class="mb-5" style="font-size: 12px;">
+                Demikian Berita Acara ini dibuat dengan sebenarnya dan penuh tanggung jawab.
+            </p>
+
+            <!-- TANDA TANGAN -->
+            <table class="w-100 text-center fw-bold mt-5" style="font-size: 13px; page-break-inside: avoid;">
+                <tr>
+                    <!-- KIRI -->
+                    <td width="50%" class="align-top">
+                        <p class="mb-1 fw-normal" id="lblTtdKiri">Yang Menyerahkan,</p>
+                        <div style="height: 80px;"></div>
+                        ( <span class="text-decoration-underline editable-text" contenteditable="true" spellcheck="false"
+                                id="namaTtdKiri">Harap Diganti!</span> )
+                    </td>
+                    <!-- KANAN -->
+                    <td width="50%" class="align-top">
+                        <p class="mb-1 fw-normal" id="lblTtdKanan">Yang Menerima,</p>
+                        <div style="height: 80px;"></div>
+                        ( <span class="text-decoration-underline editable-text" contenteditable="true" spellcheck="false"
+                                id="namaTtdKanan">-</span> )
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+        <script>
+                window.API_BASE_URL = '@apiBaseUrl';
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    // Ambil ID dari query string (?id=5) atau URL path lama (/Peminjaman/PrintBa/5)
+                    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+                    const queryId = new URLSearchParams(window.location.search).get('id');
+                    const pathId = pathSegments[pathSegments.length - 1];
+                    const id = queryId || pathId;
+
+                    if (!id || isNaN(id)) {
+                        Swal.fire('Error', 'ID Peminjaman tidak valid.', 'error').then(() => {
+                            window.location.href = '/Peminjaman/Index';
+                        });
+                        return;
+                    }
+
+                    loadBastDetail(id);
+                });
+
+                async function loadBastDetail(id) {
+                    try {
+                        const response = await fetch(`${window.API_BASE_URL}/api/peminjaman/${id}`, {
+                            method: 'GET',
+                            credentials: 'include'
+                        });
+
+                        if (response.status === 401) {
+                            window.location.href = '/Auth/Login';
+                            return;
+                        }
+
+                        if (!response.ok) {
+                            Swal.fire('Gagal', 'Data Berita Acara tidak ditemukan.', 'error').then(() => {
+                                window.location.href = '/Peminjaman/Index';
+                            });
+                            return;
+                        }
+
+                        const resJson = await response.json();
+                        const item = resJson.data || resJson;
+
+                        const noBa = item.noBa || item.NoBa || '-';
+                        const namaPeminjam = item.namaPeminjam || item.NamaPeminjam || '-';
+                        const jabatan = item.jabatan || item.Jabatan || '-';
+                        const fungsi = item.fungsi || item.Fungsi || '-';
+                        const lokasiNama = item.namaLokasi || item.NamaLokasi || item.lokasi?.namaLokasi || item.Lokasi?.NamaLokasi || '-';
+                        
+                        // Menampung Status & Tanggal Kembali
+                        const statusPeminjaman = item.statusPeminjaman || item.StatusPeminjaman || '';
+                        let tanggalKembaliStr = item.tanggalKembali || item.TanggalKembali || item.tanggalSelesai || item.TanggalSelesai;
+                        
+                        const perangkatId = item.perangkatId || item.PerangkatId;
+                        const perangkatObj = item.perangkat || item.Perangkat;
+                        let perangkatNama = perangkatObj?.nama || perangkatObj?.Nama
+                            || item.namaPerangkat || item.NamaPerangkat || item.perangkatNama || item.PerangkatNama || '-';
+                        const jumlah = item.jumlah || item.Jumlah || 0;
+                        const keterangan = item.keterangan || item.Keterangan || '-';
+                        let serialNumber = item.serialNumber || item.SerialNumber || '-';
+
+                        if (perangkatId && (perangkatNama === '-' || serialNumber === '-')) {
+                            const optionsResponse = await fetch(`${window.API_BASE_URL}/api/peminjaman/create-options`, {
+                                method: 'GET',
+                                credentials: 'include'
+                            });
+
+                            if (optionsResponse.ok) {
+                                const optionsJson = await optionsResponse.json();
+                                const options = optionsJson.options || optionsJson.data || optionsJson;
+                                const perangkatList = options.perangkatList || options.PerangkatList || [];
+                                const matchedPerangkat = perangkatList.find(function (perangkat) {
+                                    return String(perangkat.id || perangkat.Id) === String(perangkatId);
+                                });
+
+                                if (matchedPerangkat) {
+                                    perangkatNama = perangkatNama === '-'
+                                        ? (matchedPerangkat.nama || matchedPerangkat.Nama || '-')
+                                        : perangkatNama;
+                                    serialNumber = serialNumber === '-'
+                                        ? (matchedPerangkat.snLaptop || matchedPerangkat.SnLaptop || '-')
+                                        : serialNumber;
+                                }
+                            }
+                        }
+
+                        // Set Title Tab Browser
+                        document.getElementById('pageTitle').innerText = `Berita Acara - ${noBa} - SIGMA`;
+
+                        // Set Data Master ke Template HTML
+                        document.getElementById('lblNoBa').innerText = noBa;
+                        document.getElementById('lblNamaPeminjam').innerText = namaPeminjam;
+                        document.getElementById('lblJabatan').innerText = jabatan;
+                        document.getElementById('lblFungsi').innerText = fungsi;
+                        document.getElementById('lblLokasi').innerText = lokasiNama;
+                        document.getElementById('lblNamaPerangkat').innerText = perangkatNama;
+                        document.getElementById('lblJumlah').innerText = jumlah;
+                        document.getElementById('lblKeterangan').innerText = keterangan;
+                        document.getElementById('lblSerialNumber').innerText = serialNumber ? serialNumber : '-';
+
+                        // Konfigurasi Format Waktu Indonesia (Hari Ini)
+                        const optionsHari = { weekday: 'long' };
+                        const optionsBulan = { month: 'long' };
+                        const tglSekarang = new Date();
+                        const namaHariSekarang = new Intl.DateTimeFormat('id-ID', optionsHari).format(tglSekarang);
+                        const namaBulanSekarang = new Intl.DateTimeFormat('id-ID', optionsBulan).format(tglSekarang);
+                        const daySekarang = tglSekarang.getDate();
+                        const yearSekarang = tglSekarang.getFullYear();
+                        
+                        // Menyesuaikan struktur kalimat yang lebih profesional menyambung dengan "Yang bertanda tangan di bawah ini"
+                        const stringTanggalHariIni = `Pada hari ini, <strong>${namaHariSekarang}</strong> tanggal <strong>${daySekarang} ${namaBulanSekarang} ${yearSekarang}</strong>`;
+
+                        // =========================================================================
+                        // LOGIKA OTOMATIS: BAST PENYERAHAN vs BAST PENGEMBALIAN
+                        // =========================================================================
+                        if (statusPeminjaman === 'Dikembalikan') {
+                            // --- JIKA BARANG SUDAH DIKEMBALIKAN ---
+                            document.getElementById('headerText').innerHTML = 'Formulir Berita Acara<br>Pengembalian ';
+                            document.getElementById('lblTanggalKalimat').innerHTML = `${stringTanggalHariIni}, menyatakan telah <strong>mengembalikan</strong> perangkat IT inventaris perusahaan kepada pihak Pengelola (Admin/IT) dalam keadaan baik sesuai dengan ketentuan, dengan rincian sebagai berikut:`;
+                            
+                            // Sembunyikan perjanjian pengembalian (karena sudah dikembalikan)
+                            document.getElementById('lblKalimatPengembalian').style.display = 'none';
+
+                            // Tanda Tangan: Peminjam Mengembalikan, Admin Menerima
+                            document.getElementById('lblTtdKiri').innerText = 'Yang Mengembalikan,';
+                            document.getElementById('namaTtdKiri').innerText = namaPeminjam;
+
+                            document.getElementById('lblTtdKanan').innerText = 'Yang Menerima,';
+                            document.getElementById('namaTtdKanan').innerText = 'Harap Diganti!';
+                        }
+                        else {
+                            // --- JIKA BARANG SEDANG DIPINJAM (SERAH TERIMA) ---
+                            document.getElementById('headerText').innerHTML = 'Formulir Berita Acara<br>Serah Terima';
+                            document.getElementById('lblTanggalKalimat').innerHTML = `${stringTanggalHariIni}, menyatakan telah <strong>menerima</strong> perangkat IT inventaris perusahaan dari pihak Pengelola (Admin/IT) untuk keperluan operasional kerja, dengan rincian sebagai berikut:`;
+                            
+                            // Tampilkan Perjanjian Pengembalian jika tanggal valid
+                            if (tanggalKembaliStr && !tanggalKembaliStr.startsWith("0001")) {
+                                const tglKembali = new Date(tanggalKembaliStr);
+                                const namaHariKembali = new Intl.DateTimeFormat('id-ID', optionsHari).format(tglKembali);
+                                const namaBulanKembali = new Intl.DateTimeFormat('id-ID', optionsBulan).format(tglKembali);
+                                const dayKembali = tglKembali.getDate();
+                                const yearKembali = tglKembali.getFullYear();
+
+                                document.getElementById('lblKalimatPengembalian').innerHTML = `Pihak Penerima (Peminjam) bertanggung jawab penuh untuk menjaga dan merawat perangkat IT tersebut dengan baik selama masa penggunaan operasional. Pihak Penerima juga sepakat untuk mengembalikan perangkat secara utuh dan lengkap selambat-lambatnya pada hari <strong>${namaHariKembali}, ${dayKembali} ${namaBulanKembali} ${yearKembali}</strong>.`;
+                                document.getElementById('lblKalimatPengembalian').style.display = 'block';
+                            } else {
+                                document.getElementById('lblKalimatPengembalian').style.display = 'none';
+                            }
+
+                            // Tanda Tangan: Admin Menyerahkan, Peminjam Menerima
+                            document.getElementById('lblTtdKiri').innerText = 'Yang Menyerahkan,';
+                            document.getElementById('namaTtdKiri').innerText = 'Harap Diganti!';
+
+                            document.getElementById('lblTtdKanan').innerText = 'Yang Menerima,';
+                            document.getElementById('namaTtdKanan').innerText = namaPeminjam;
+                        }
+
+                    } catch (error) {
+                        console.error('Gagal mengambil data BAST:', error);
+                        Swal.fire('Error', 'Gagal memuat Berita Acara dari server backend.', 'error');
+                    }
+                }
+        </script>
+    </body>
+
+</html>

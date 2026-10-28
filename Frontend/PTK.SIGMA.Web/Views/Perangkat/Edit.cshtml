@@ -1,0 +1,525 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Edit Barang - SIGMA";
+}
+
+@section Styles {
+    <style>
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        .btn-pertamina-red {
+            background-color: #ED1B24;
+            color: white;
+            border: none;
+        }
+
+        .btn-pertamina-red:hover {
+            background-color: #d0121a;
+            color: white;
+        }
+
+        .custom-dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-input {
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            border-radius: 50rem;
+            font-size: 0.85rem;
+        }
+
+        .custom-select-input:hover {
+            border-color: #003876;
+            background-color: white;
+        }
+
+        .custom-dropdown-list {
+            position: absolute;
+            z-index: 1050;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            margin-top: 8px;
+            border: 1px solid #dcdcdc;
+            padding: 8px 0;
+        }
+
+        .dropdown-item-custom {
+            cursor: pointer;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+        }
+
+        .dropdown-item-custom:hover {
+            background-color: #e6f0fa;
+            color: #003876;
+        }
+    </style>
+}
+
+<div class="container py-4 py-md-5 animate-fade-in d-flex justify-content-center px-3">
+    <div class="card border-0 shadow-sm rounded-4 w-100 bg-white" style="max-width: 800px;">
+        <div class="card-header bg-white border-bottom p-4 d-flex align-items-center rounded-top-4">
+            <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                 style="width: 50px; height: 50px;">
+                <i class="bi bi-pencil-square text-warning fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0">Edit Data Inventaris</h5>
+                <p class="text-muted small m-0 mt-1">Perbarui informasi spesifikasi dan kategori perangkat SIGMA.</p>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5" style="font-size: 0.85rem;">
+            <!-- PERHATIKAN: Ditambahkan enctype="multipart/form-data" agar file foto terkirim -->
+            <form id="formEditPerangkat" enctype="multipart/form-data">
+                <input type="hidden" name="Dokumentasi" id="hiddenDokumentasi" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase">Kategori Barang <span
+                        class="text-danger">*</span></label>
+                        <div class="custom-dropdown-container">
+                            <div class="custom-select-input shadow-sm border" id="kategoriBox"
+                                 onclick="toggleDropdown('kategoriList', 'kategoriBox')">
+                                <span id="kategoriText">Pilih Kategori</span><i class="bi bi-chevron-down"></i>
+                            </div>
+                            <input type="hidden" name="Kategori" id="hiddenKategori" />
+                            <div class="custom-dropdown-list shadow-lg" id="kategoriList"></div>
+                        </div>
+                    </div>
+
+                    <div id="formLaptop" class="d-none p-3 mb-3 rounded-4 bg-light border">
+                        <div class="fw-bold text-primary mb-2 small text-uppercase"><i class="bi bi-laptop me-1"></i>
+                            Informasi Khusus Laptop</div>
+                            <div class="row g-3 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark small">Type Laptop</label>
+                                    <input name="TypeLaptop" id="TypeLaptop"
+                                           class="form-control rounded-pill py-2 px-3 border shadow-sm" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark small">Product ID</label>
+                                    <input name="ProductId" id="ProductId"
+                                           class="form-control rounded-pill py-2 px-3 border shadow-sm" />
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold text-dark small">Serial Number (SN)</label>
+                                <textarea name="SnLaptop" id="SnLaptop" rows="2"
+                                          class="form-control rounded-4 py-2 px-3 border shadow-sm"></textarea>
+                            </div>
+                        </div>
+
+                        <div id="formUmum" class="d-none">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-dark small text-uppercase">Lokasi Gudang <span
+                                    class="text-danger">*</span></label>
+                                    <div class="custom-dropdown-container">
+                                        <div class="custom-select-input shadow-sm border" id="lokasiBox"
+                                             onclick="toggleDropdown('lokasiList', 'lokasiBox')">
+                                            <span id="lokasiText">Pilih Lokasi</span><i class="bi bi-chevron-down"></i>
+                                        </div>
+                                        <input type="hidden" name="LokasiId" id="hiddenLokasiId" required />
+                                        <div class="custom-dropdown-list shadow-lg" id="lokasiList"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-dark small text-uppercase">Lokasi Rak</label>
+                                    <div class="custom-dropdown-container">
+                                        <div class="custom-select-input shadow-sm border" id="jenisLokasiBox"
+                                             onclick="toggleDropdown('jenisLokasiList', 'jenisLokasiBox')">
+                                            <span id="jenisLokasiText">Pilih Rak</span><i class="bi bi-chevron-down"></i>
+                                        </div>
+                                        <input type="hidden" name="LokasiRak" id="hiddenJenisLokasi" />
+                                        <div class="custom-dropdown-list shadow-lg" id="jenisLokasiList"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-dark small text-uppercase">Nama Perangkat <span
+                                        class="text-danger">*</span></label>
+                                        <input name="Nama" id="Nama" class="form-control rounded-pill py-2 px-3 border shadow-sm"
+                                               required />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-dark small text-uppercase">Jumlah <span
+                                            class="text-danger">*</span></label>
+                                            <input name="Jumlah" id="Jumlah" type="number"
+                                                   class="form-control rounded-pill py-2 px-3 border shadow-sm" required />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold text-dark small text-uppercase">Status</label>
+                                            <div class="custom-dropdown-container">
+                                                <div class="custom-select-input shadow-sm border" id="statusBox"
+                                                     onclick="toggleDropdown('statusList', 'statusBox')">
+                                                    <span id="statusText">Aset</span><i class="bi bi-chevron-down"></i>
+                                                </div>
+                                                <input type="hidden" name="StatusSewa" id="hiddenStatus" />
+                                                <div class="custom-dropdown-list shadow-lg" id="statusList">
+                                                    <div class="dropdown-item-custom"
+                                                         onclick="pilihCustom('Aset', 'Aset', 'hiddenStatus', 'statusText', 'statusList', 'statusBox')">
+                                                        Aset</div>
+                                                        <div class="dropdown-item-custom"
+                                                             onclick="pilihCustom('Sewa', 'Sewa', 'hiddenStatus', 'statusText', 'statusList', 'statusBox')">
+                                                            Sewa</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-semibold text-dark small text-uppercase">Vendor <span
+                                                        class="text-danger">*</span></label>
+                                                        <div class="custom-dropdown-container">
+                                                            <div class="custom-select-input shadow-sm border" id="vendorBox"
+                                                                 onclick="toggleDropdown('vendorList', 'vendorBox')">
+                                                                <span id="vendorText">Pilih Vendor</span><i class="bi bi-chevron-down"></i>
+                                                            </div>
+                                                            <input type="hidden" name="VendorId" id="hiddenVendor" required />
+                                                            <div class="custom-dropdown-list shadow-lg" id="vendorList"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold text-dark small text-uppercase">Kondisi Barang <span
+                                                            class="text-danger">*</span></label>
+                                                            <div class="custom-dropdown-container">
+                                                                <div class="custom-select-input shadow-sm border" id="kondisiBox"
+                                                                     onclick="toggleDropdown('kondisiList', 'kondisiBox')">
+                                                                    <span id="kondisiText">Baik</span><i class="bi bi-chevron-down"></i>
+                                                                </div>
+                                                                <input type="hidden" name="Kondisi" id="hiddenKondisi" />
+                                                                <div class="custom-dropdown-list shadow-lg" id="kondisiList">
+                                                                    <div class="dropdown-item-custom"
+                                                                         onclick="pilihCustom('Baik', 'Baik', 'hiddenKondisi', 'kondisiText', 'kondisiList', 'kondisiBox')">
+                                                                        Baik</div>
+                                                                        <div class="dropdown-item-custom"
+                                                                             onclick="pilihCustom('Rusak', 'Rusak', 'hiddenKondisi', 'kondisiText', 'kondisiList', 'kondisiBox')">
+                                                                            Rusak</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="mb-3">
+                                                                    <label class="form-label fw-semibold text-dark small text-uppercase">Keterangan</label>
+                                                                    <input name="Keterangan" id="Keterangan"
+                                                                           class="form-control rounded-pill py-2 px-3 border shadow-sm" />
+                                                                </div>
+
+                                                                <div class="mb-4 mt-3 border-top pt-3">
+                                                                    <label class="form-label fw-semibold text-dark small text-uppercase">Dokumentasi Foto
+                                                                        Perangkat</label>
+
+                                                                        <div id="existingImageContainer" class="mb-3 d-none">
+                                                                            <img id="existingImg" src="" class="img-thumbnail rounded-3 shadow-sm"
+                                                                                 style="height: 100px; object-fit: cover;"
+                                                                                 onerror="this.style.display='none'; document.getElementById('existingImageContainer').classList.add('d-none');" />
+                                                                            <div class="text-muted small mt-1">Foto saat ini</div>
+                                                                        </div>
+
+                                                                        <div class="dropdown">
+                                                                            <button
+                                                                                class="btn btn-outline-danger w-100 rounded-pill btn-sm py-2 fw-semibold shadow-sm dropdown-toggle"
+                                                                                type="button" data-bs-toggle="dropdown">
+                                                                                <i class="bi bi-camera-fill fs-5"></i> Ubah / Ganti Foto Dokumentasi
+                                                                            </button>
+                                                                            <ul class="dropdown-menu w-100 shadow-lg p-2">
+                                                                                <li><button class="dropdown-item rounded-3 py-2" type="button"
+                                                                                                onclick="triggerPhoto('camera')">Ambil dari Kamera</button></li>
+                                                                                    <li><button class="dropdown-item rounded-3 py-2" type="button"
+                                                                                                    onclick="triggerPhoto('gallery')">Pilih dari Galeri</button></li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                                <input type="file" id="inputDokumentasiUtama" name="FileDokumentasi" accept="image/*"
+                                                                                       class="d-none" onchange="previewSelectedImage(this)" />
+
+                                                                                <div id="imagePreviewContainer" class="mt-2 text-center p-2 border rounded-4 bg-light d-none">
+                                                                                    <img id="previewImg" src="#" class="rounded-3 shadow-sm mb-2"
+                                                                                         style="max-height: 120px; object-fit: contain;" />
+                                                                                    <br>
+                                                                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-0"
+                                                                                            onclick="resetImageSelection()">Batalkan Perubahan Foto</button>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                                                                                <a href="/Home/Index"
+                                                                                   class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm">Batal</a>
+                                                                                <button type="submit"
+                                                                                        class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                                                                                    <i class="bi bi-save me-1"></i> Simpan Perubahan
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        @section Scripts {
+                                                            <script>window.API_BASE_URL = '@apiBaseUrl';</script>
+                                                            <script>
+                                                                const urlParams = new URLSearchParams(window.location.search);
+                                                                const perangkatId = urlParams.get('id');
+
+                                                                document.addEventListener('DOMContentLoaded', async () => {
+                                                                    if (!perangkatId) {
+                                                                        Swal.fire('Error', 'ID perangkat tidak ditemukan.', 'error').then(() => window.location.href = '/KelolaBarang/Index');
+                                                                        return;
+                                                                    }
+
+                                                                    try {
+                                                                        // 1. Ambil Options Dropdown
+                                                                        const resOpt = await fetch(`${window.API_BASE_URL}/api/perangkat/create-options`, { credentials: 'include' });
+                                                                        const responseOpt = await resOpt.json();
+                                                                        const dataOpt = responseOpt.data || {};
+
+                                                                        if (responseOpt.success) {
+                                                                            let katHtml = ''; (dataOpt.kategoriList || []).forEach(k => {
+                                                                                const value = encodeURIComponent(String(k)).replace(/'/g, '%27');
+                                                                                katHtml += `<div class="dropdown-item-custom" onclick="pilihKategori(decodeURIComponent('${value}'))">${window.escapeHtml(k)}</div>`;
+                                                                            });
+                                                                            document.getElementById('kategoriList').innerHTML = katHtml;
+
+                                                                            let lokHtml = ''; (dataOpt.lokasiList || []).forEach(l => {
+                                                                                const id = encodeURIComponent(String(l.id)).replace(/'/g, '%27');
+                                                                                const name = encodeURIComponent(String(l.namaLokasi)).replace(/'/g, '%27');
+                                                                                lokHtml += `<div class="dropdown-item-custom" onclick="pilihCustom(decodeURIComponent('${id}'), decodeURIComponent('${name}'), 'hiddenLokasiId', 'lokasiText', 'lokasiList', 'lokasiBox')">${window.escapeHtml(l.namaLokasi)}</div>`;
+                                                                            });
+                                                                            document.getElementById('lokasiList').innerHTML = lokHtml;
+
+                                                                            window.renderSigmaRackDropdown(
+                                                                                document.getElementById('jenisLokasiList'),
+                                                                                dataOpt.lokasiRakList || [],
+                                                                                (value, label) => pilihCustom(value, label, 'hiddenJenisLokasi', 'jenisLokasiText', 'jenisLokasiList', 'jenisLokasiBox'),
+                                                                                { placeholder: 'Pilih Rak' }
+                                                                            );
+
+                                                                            let venHtml = ''; (dataOpt.vendorList || []).forEach(v => {
+                                                                                const id = encodeURIComponent(String(v.id)).replace(/'/g, '%27');
+                                                                                const name = encodeURIComponent(String(v.namaVendor)).replace(/'/g, '%27');
+                                                                                venHtml += `<div class="dropdown-item-custom" onclick="pilihCustom(decodeURIComponent('${id}'), decodeURIComponent('${name}'), 'hiddenVendor', 'vendorText', 'vendorList', 'vendorBox')">${window.escapeHtml(v.namaVendor)}</div>`;
+                                                                            });
+                                                                            document.getElementById('vendorList').innerHTML = venHtml;
+                                                                        }
+
+                                                                        // 2. Ambil Data Perangkat yang mau diedit
+                                                                        const resData = await fetch(`${window.API_BASE_URL}/api/perangkat/${perangkatId}`, { credentials: 'include' });
+                                                                        const pData = await resData.json();
+
+                                                                        if (pData.success && pData.data) {
+                                                                            const p = pData.data;
+                                                                            document.getElementById('Nama').value = p.nama;
+                                                                            document.getElementById('Jumlah').value = p.jumlah;
+                                                                            document.getElementById('Keterangan').value = p.keterangan || '';
+                                                                            document.getElementById('TypeLaptop').value = p.typeLaptop || '';
+                                                                            document.getElementById('ProductId').value = p.productId || '';
+                                                                            document.getElementById('SnLaptop').value = p.snLaptop || '';
+
+                                                                            // Set Dropdowns
+                                                                            if (p.kategori) pilihKategori(p.kategori);
+                                                                            if (p.lokasiId) pilihCustom(p.lokasiId, p.namaLokasi, 'hiddenLokasiId', 'lokasiText', 'lokasiList', 'lokasiBox');
+                                                                            if (p.vendorId) pilihCustom(p.vendorId, p.namaVendor, 'hiddenVendor', 'vendorText', 'vendorList', 'vendorBox');
+                                                                            if (p.kondisi) pilihCustom(p.kondisi, p.kondisi, 'hiddenKondisi', 'kondisiText', 'kondisiList', 'kondisiBox');
+                                                                            if (p.statusSewa) pilihCustom(p.statusSewa, p.statusSewa, 'hiddenStatus', 'statusText', 'statusList', 'statusBox');
+                                                                            if (p.lokasiRak) pilihCustom(p.lokasiRak, p.lokasiRak, 'hiddenJenisLokasi', 'jenisLokasiText', 'jenisLokasiList', 'jenisLokasiBox');
+
+                                                                            // Image Handle - Mengarah ke endpoint perangkat image yang baru
+                                                                            if (p.dokumentasi) {
+                                                                                document.getElementById('hiddenDokumentasi').value = p.dokumentasi;
+                                                                                let imageUrl = p.dokumentasi;
+                                                                                if (!/^https?:\/\//i.test(imageUrl) && !imageUrl.startsWith('/api/files/')) {
+                                                                                    let fileName = imageUrl.replace(/^.*[\\\/]/, '');
+                                                                                    imageUrl = `${window.API_BASE_URL}/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`;
+                                                                                }
+                                                                                document.getElementById('existingImg').src = imageUrl;
+                                                                                document.getElementById('existingImageContainer').classList.remove('d-none');
+                                                                            }
+                                                                        }
+                                                                    } catch (e) { console.error("Error:", e); }
+                                                                });
+                                                                document.getElementById('formEditPerangkat').addEventListener('submit', async (e) => {
+                                                                    e.preventDefault();
+
+                                                                    const form = e.target;
+                                                                    const formData = new FormData(form);
+
+                                                                    formData.set(
+                                                                        'Kategori',
+                                                                        document.getElementById('hiddenKategori').value || ''
+                                                                    );
+                                                                    formData.set(
+                                                                        'LokasiId',
+                                                                        document.getElementById('hiddenLokasiId').value || ''
+                                                                    );
+                                                                    formData.set(
+                                                                        'LokasiRak',
+                                                                        document.getElementById('hiddenJenisLokasi').value || ''
+                                                                    );
+                                                                    formData.set(
+                                                                        'StatusSewa',
+                                                                        document.getElementById('hiddenStatus').value || ''
+                                                                    );
+                                                                    formData.set(
+                                                                        'VendorId',
+                                                                        document.getElementById('hiddenVendor').value || ''
+                                                                    );
+                                                                    formData.set(
+                                                                        'Kondisi',
+                                                                        document.getElementById('hiddenKondisi').value || ''
+                                                                    );
+
+                                                                    try {
+                                                                        const res = await fetch(
+                                                                            `${window.API_BASE_URL}/api/perangkat/${perangkatId}`,
+                                                                            {
+                                                                                method: 'PUT',
+                                                                                body: formData,
+                                                                                credentials: 'include',
+                                                                                headers: {
+                                                                                    'Accept': 'application/json'
+                                                                                }
+                                                                            }
+                                                                        );
+
+                                                                        const responseText = await res.text();
+                                                                        let result;
+
+                                                                        try {
+                                                                            result = responseText
+                                                                                ? JSON.parse(responseText)
+                                                                                : {};
+                                                                        } catch {
+                                                                            result = {
+                                                                                success: false,
+                                                                                message: responseText || `HTTP ${res.status}`
+                                                                            };
+                                                                        }
+
+                                                                        if (!res.ok) {
+                                                                            let message =
+                                                                                result.message ||
+                                                                                `Terjadi kesalahan (HTTP ${res.status}).`;
+
+                                                                            if (result.errors) {
+                                                                                const errorList =
+                                                                                    Object.values(result.errors).flat();
+
+                                                                                if (errorList.length > 0) {
+                                                                                    message = errorList.join('<br>');
+                                                                                }
+                                                                            }
+
+                                                                            Swal.fire(
+                                                                                'Gagal!',
+                                                                                message,
+                                                                                'error'
+                                                                            );
+                                                                            return;
+                                                                        }
+
+                                                                        if (result.success) {
+                                                                            Swal.fire(
+                                                                                'Berhasil!',
+                                                                                result.message || 'Data barang berhasil diperbarui!',
+                                                                                'success'
+                                                                            ).then(() => {
+                                                                                window.location.href = '/Home/Index';
+                                                                            });
+                                                                        } else {
+                                                                            Swal.fire(
+                                                                                'Gagal!',
+                                                                                result.message || 'Data barang gagal diperbarui.',
+                                                                                'error'
+                                                                            );
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error(
+                                                                            'Gagal menyimpan perubahan perangkat:',
+                                                                            error
+                                                                        );
+
+                                                                        Swal.fire(
+                                                                            'Gagal!',
+                                                                            error.message || 'Tidak dapat terhubung ke server.',
+                                                                            'error'
+                                                                        );
+                                                                    }
+                                                                });
+
+                                                                function toggleDropdown(listId, boxId) {
+                                                                    document.querySelectorAll('.custom-dropdown-list').forEach(el => { if (el.id !== listId) el.style.display = 'none'; });
+                                                                    const list = document.getElementById(listId);
+                                                                    list.style.display = list.style.display === 'block' ? 'none' : 'block';
+                                                                }
+
+                                                                function pilihCustom(val, text, hiddenId, textId, listId, boxId) {
+                                                                    document.getElementById(hiddenId).value = val;
+                                                                    document.getElementById(textId).innerText = text;
+                                                                    if (listId) document.getElementById(listId).style.display = 'none';
+                                                                }
+
+                                                                function pilihKategori(kat) {
+                                                                    pilihCustom(kat, kat, 'hiddenKategori', 'kategoriText', 'kategoriList', 'kategoriBox');
+                                                                    document.getElementById('formUmum').classList.remove('d-none');
+                                                                    if (kat.toLowerCase().includes('laptop')) document.getElementById('formLaptop').classList.remove('d-none');
+                                                                    else document.getElementById('formLaptop').classList.add('d-none');
+                                                                }
+
+                                                                document.addEventListener('click', e => {
+                                                                    if (!e.target.closest('.custom-dropdown-container')) {
+                                                                        document.querySelectorAll('.custom-dropdown-list').forEach(el => el.style.display = 'none');
+                                                                    }
+                                                                });
+
+                                                                function triggerPhoto(mode) {
+                                                                    const input = document.getElementById('inputDokumentasiUtama');
+                                                                    if (mode === 'camera') input.setAttribute('capture', 'environment'); else input.removeAttribute('capture');
+                                                                    input.click();
+                                                                }
+
+                                                                function previewSelectedImage(input) {
+                                                                    if (input.files && input.files[0]) {
+                                                                        const reader = new FileReader();
+                                                                        reader.onload = e => {
+                                                                            document.getElementById('previewImg').src = e.target.result;
+                                                                            document.getElementById('imagePreviewContainer').classList.remove('d-none');
+                                                                        };
+                                                                        reader.readAsDataURL(input.files[0]);
+                                                                    }
+                                                                }
+
+                                                                function resetImageSelection() {
+                                                                    document.getElementById('inputDokumentasiUtama').value = '';
+                                                                    document.getElementById('imagePreviewContainer').classList.add('d-none');
+                                                                }
+                                                            </script>
+                                                        }

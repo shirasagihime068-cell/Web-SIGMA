@@ -1,0 +1,267 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Masuk - SIGMA";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#b60812" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Michroma&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/fonts/inter/inter-300-700.css" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body>
+    <main class="page-shell" id="pageShell">
+        <div class="background-vignette" aria-hidden="true"></div>
+
+        <section class="hero" aria-labelledby="brandTitle">
+            <div class="hero-stack">
+                <div class="brand-copy">
+                    <h1 id="brandTitle" class="brand-title">SIGMA</h1>
+                    <p class="brand-subtitle">
+                        <span>Sistem Informasi Gudang dan</span><br class="mobile-break" />
+                        <span class="mobile-second">Management ICT</span>
+                    </p>
+                    <p class="brand-company">PT Pertamina Trans Kontinental</p>
+                    <div class="brand-kicker" aria-hidden="true"></div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="login-wrap" aria-label="Form login SIGMA">
+            <div class="login-card login-folder-card">
+                <img class="folder-frame"
+                     src="~/images/login/login-folder.png"
+                     alt="Folder blueprint login"
+                     draggable="false" />
+
+                <div class="folder-vertical-brand" aria-hidden="true">
+                    <img src="~/images/login/ptk-logo-color.png" alt="" />
+                </div>
+
+                <div class="folder-content">
+                    <div class="card-brand card-brand-folder">
+                        <div class="app-icon" aria-hidden="true">
+                            <svg viewBox="0 0 64 64" role="presentation">
+                                <path d="M32 8 52 19v25L32 56 12 44V19L32 8Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                                <path d="m13 20 19 11 19-11M32 31v24" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                                <path d="m32 8 20 11-20 12-19-11L32 8Z" fill="currentColor" opacity=".22" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2>SIGMA</h2>
+                            <p>Sistem Informasi Gudang<br />dan Management ICT</p>
+                        </div>
+                    </div>
+
+                    <form id="loginForm" class="folder-form" novalidate>
+                        <label class="field-label" for="email">Email</label>
+                        <div class="input-shell folder-input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 7l9 6 9-6" /></svg>
+                            </span>
+                            <input id="email"
+                                   type="email"
+                                   autocomplete="username"
+                                   inputmode="email"
+                                   placeholder="email@example.com"
+                                   required />
+                        </div>
+
+                        <label class="field-label" for="password">Password</label>
+                        <div class="input-shell folder-input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M6 10h12v10H6zM8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                            </span>
+                            <input id="password"
+                                   type="password"
+                                   autocomplete="current-password"
+                                   placeholder="••••••••"
+                                   required />
+                            <button class="icon-button" id="togglePassword" type="button" aria-label="Tampilkan password">
+                                <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.7" /></svg>
+                            </button>
+                        </div>
+
+                        <label class="field-label" for="captchaInput">Kode Verifikasi</label>
+                        <div class="captcha-row folder-captcha-row">
+                            <div class="captcha-box">
+                                <img id="captchaImg" alt="Kode verifikasi CAPTCHA" />
+                            </div>
+                            <button class="refresh-button" id="refreshCaptcha" type="button" title="Ganti kode verifikasi">
+                                <svg viewBox="0 0 24 24"><path d="M20 6v5h-5M4 18v-5h5M5.8 9a7 7 0 0 1 12-2.4L20 11M4 13l2.2 4.4A7 7 0 0 0 18.2 15" /></svg>
+                                <span>Ganti</span>
+                            </button>
+                        </div>
+
+                        <div class="input-shell verify-shell folder-input-shell verify-folder-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6l8-3Z" /></svg>
+                            </span>
+                            <input id="captchaInput"
+                                   type="text"
+                                   maxlength="5"
+                                   autocomplete="off"
+                                   autocapitalize="characters"
+                                   spellcheck="false"
+                                   placeholder="KETIK KODE DI ATAS"
+                                   required />
+                        </div>
+
+                        <button class="primary-button folder-primary-button" id="btnLogin" type="submit">
+                            <span class="button-label">Masuk ke Sistem</span>
+                            <span class="button-arrow" aria-hidden="true">&rarr;</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const apiBaseUrl = '';
+            const requestedReturnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            const postLoginUrl = requestedReturnUrl && requestedReturnUrl.startsWith('/') && !requestedReturnUrl.startsWith('//')
+                ? requestedReturnUrl
+                : '/Home/Index';
+            const loginForm = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const captchaInput = document.getElementById('captchaInput');
+            const captchaImg = document.getElementById('captchaImg');
+            const refreshCaptchaButton = document.getElementById('refreshCaptcha');
+            const togglePassword = document.getElementById('togglePassword');
+            const loginButton = document.getElementById('btnLogin');
+            const toast = document.getElementById('toast');
+            let toastTimer;
+
+            function showToast(message, type = '') {
+                window.clearTimeout(toastTimer);
+                toast.textContent = message;
+                toast.className = `toast show ${type}`.trim();
+                toastTimer = window.setTimeout(() => {
+                    toast.className = 'toast';
+                }, 3500);
+            }
+
+            function refreshCaptcha(focusInput = false) {
+                captchaImg.src = `${apiBaseUrl}/api/auth/GetCaptchaImage?t=${Date.now()}`;
+                captchaInput.value = '';
+                if (focusInput) {
+                    captchaInput.focus();
+                }
+            }
+
+            function setSubmitting(isSubmitting) {
+                loginButton.disabled = isSubmitting;
+                loginButton.classList.toggle('is-loading', isSubmitting);
+                loginButton.querySelector('.button-label').textContent = isSubmitting
+                    ? 'Memproses...'
+                    : 'Masuk ke Sistem';
+            }
+
+            refreshCaptchaButton.addEventListener('click', () => refreshCaptcha(true));
+
+            captchaImg.addEventListener('error', () => {
+                showToast('CAPTCHA gagal dimuat. Pastikan backend sedang berjalan.', 'error');
+            });
+
+            // Generate CAPTCHA immediately on the first page load.
+            // Previously refreshCaptcha() was only called after a failed login
+            // or when the refresh button was clicked, so the initial image
+            // remained empty.
+            refreshCaptcha(false);
+
+            togglePassword.addEventListener('click', () => {
+                const isVisible = passwordInput.type === 'text';
+                passwordInput.type = isVisible ? 'password' : 'text';
+                togglePassword.setAttribute('aria-label', isVisible ? 'Tampilkan password' : 'Sembunyikan password');
+                passwordInput.focus();
+            });
+
+            loginForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const captchaCode = captchaInput.value.trim();
+
+                if (!email || !password || !captchaCode) {
+                    showToast('Lengkapi email, password, dan kode verifikasi.', 'error');
+                    return;
+                }
+
+                if (!/^\S+@@\S+\.\S+$/.test(email)) {
+                    showToast('Format email belum valid.', 'error');
+                    emailInput.focus();
+                    return;
+                }
+
+                setSubmitting(true);
+
+                try {
+                    const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ email, password, captchaCode })
+                    });
+
+                    const result = await response.json().catch(() => null);
+
+                    if (response.ok && result?.success) {
+                        const reminderPrefix = 'sigma.opname.reminder.';
+                        try {
+                            Object.keys(window.sessionStorage)
+                                .filter(key => key.startsWith(reminderPrefix))
+                                .forEach(key => window.sessionStorage.removeItem(key));
+                            Object.keys(window.localStorage)
+                                .filter(key => key.startsWith(reminderPrefix))
+                                .forEach(key => window.localStorage.removeItem(key));
+                        } catch {
+                            // Storage can be unavailable in private/restricted browser contexts.
+                        }
+
+                        showToast('Login berhasil. Mengalihkan ke dashboard...', 'success');
+                        window.location.assign(postLoginUrl);
+                        return;
+                    }
+
+                    showToast(result?.message || 'Email, password, atau CAPTCHA tidak sesuai.', 'error');
+
+                    if (result?.newCaptchaImage) {
+                        captchaImg.src = result.newCaptchaImage;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+                    } else {
+                        refreshCaptcha(true);
+                    }
+                } catch (error) {
+                    console.error('Login API error:', error);
+                    showToast('Tidak dapat terhubung ke server backend.', 'error');
+                    refreshCaptcha(false);
+                } finally {
+                    setSubmitting(false);
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>

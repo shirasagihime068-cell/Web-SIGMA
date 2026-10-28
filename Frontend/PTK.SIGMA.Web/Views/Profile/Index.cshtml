@@ -1,0 +1,230 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Kelola Profil Saya - SIGMA";
+}
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    .text-pertamina-red {
+        color: #ED1B24 !important;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+    }
+
+    .bg-pertamina-blue {
+        background-color: #003876 !important;
+    }
+
+    .btn-pertamina-blue {
+        background-color: #003876;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-blue:hover {
+        background-color: #002b5c;
+        color: white;
+    }
+
+    .form-control:focus {
+        border-color: #003876 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15) !important;
+    }
+</style>
+
+<!-- KONTAINER UTAMA -->
+<div class="container py-4 py-md-5 animate-fade-in d-flex justify-content-center px-3">
+    <div class="card border-0 shadow-sm rounded-4 w-100 bg-white" style="max-width: 800px;">
+
+        <!-- HEADER CARD -->
+        <div class="card-header bg-white border-bottom p-4 d-flex align-items-center rounded-top-4">
+            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                 style="width: 50px; height: 50px;">
+                <i class="bi bi-person-circle text-success fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Pengaturan Akun</h5>
+                <p class="text-muted small m-0 mt-1" style="font-size: 0.8rem;">
+                    Perbarui informasi data pribadi dan kata sandi akun Anda.
+                </p>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5" style="font-size: 0.85rem;">
+
+            <form id="formProfile">
+                <input type="hidden" id="userId" />
+
+                <!-- USERNAME -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+                        Username <span class="text-muted fw-normal">(Tidak Dapat Diubah)</span>
+                    </label>
+                    <input type="text" id="inputUsername"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm text-dark" readonly />
+                </div>
+
+                <!-- NAMA LENGKAP -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+                        Nama Lengkap <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" id="inputNamaLengkap"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm text-dark"
+                           placeholder="Masukkan nama lengkap Anda" required autocomplete="off" />
+                </div>
+
+                <!-- PASSWORD BARU -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small text-uppercase"
+                           style="letter-spacing: 0.5px;">Password Baru</label>
+                    <input type="password" id="inputNewPassword"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm text-dark"
+                           placeholder="Masukkan password baru" autocomplete="new-password" />
+                    <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">
+                        <i class="bi bi-info-circle me-1"></i> Biarkan kosong apabila Anda tidak ingin mengganti
+                        password lama.
+                    </div>
+                </div>
+
+                <!-- ROLE / HAK AKSES -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
+                        Role / Hak Akses <span class="text-muted fw-normal">(Tidak Dapat Diubah)</span>
+                    </label>
+                    <input type="text" id="inputRole"
+                           class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm text-dark" disabled />
+                </div>
+
+                <!-- TOMBOL AKSI -->
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="/Home/Index"
+                       class="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-dark shadow-sm"
+                       style="font-size: 0.85rem;">Batal</a>
+                    <button type="submit"
+                            class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap"
+                            style="font-size: 0.85rem;">
+                        <i class="bi bi-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+    <script>
+        window.API_BASE_URL = '@apiBaseUrl';
+
+        document.addEventListener("DOMContentLoaded", function () {
+        loadProfileData();
+
+        // Handle Submit Form Profile
+        document.getElementById('formProfile').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const payload = {
+        Id: parseInt(document.getElementById('userId').value),
+        NamaLengkap: document.getElementById('inputNamaLengkap').value.trim(),
+        Password: document.getElementById('inputNewPassword').value || null
+        };
+
+        try {
+        const response = await fetch(`${window.API_BASE_URL}/api/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include'
+        });
+
+        if (response.status === 401) {
+        window.location.href = '/Auth/Login';
+        return;
+        }
+
+        const result = await response.json().catch(() => ({ success: response.ok }));
+
+        if (response.ok && (result.success !== false)) {
+        Swal.fire({
+        title: 'Berhasil!',
+        text: result.message || 'Profil berhasil diperbarui.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: { popup: 'rounded-4 shadow-lg' }
+        }).then(() => {
+        // Kosongkan input password setelah sukses
+        document.getElementById('inputNewPassword').value = '';
+        loadProfileData();
+        });
+        } else {
+        Swal.fire('Gagal!', result.message || 'Gagal memperbarui profil.', 'error');
+        }
+        } catch (error) {
+        Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+        }
+        });
+        });
+
+        async function loadProfileData() {
+        try {
+        const response = await fetch(`${window.API_BASE_URL}/api/profile`, {
+        method: 'GET',
+        credentials: 'include'
+        });
+
+        if (response.status === 401) {
+        window.location.href = '/Auth/Login';
+        return;
+        }
+
+        if (!response.ok) {
+        Swal.fire('Gagal', 'Gagal memuat data profil.', 'error');
+        return;
+        }
+
+        const resJson = await response.json();
+        const item = resJson.data || resJson;
+
+        document.getElementById('userId').value = item.id || item.Id || '';
+        document.getElementById('inputUsername').value = item.username || item.Username || '';
+        document.getElementById('inputNamaLengkap').value = item.namaLengkap || item.NamaLengkap || '';
+        document.getElementById('inputRole').value = item.role || item.Role || '';
+
+        } catch (error) {
+        console.error('Gagal mengambil data profil:', error);
+        Swal.fire('Error', 'Gagal terhubung ke server backend.', 'error');
+        }
+        }
+    </script>
+}

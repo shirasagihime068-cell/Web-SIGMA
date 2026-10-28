@@ -1,0 +1,140 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    Layout = null;
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Hapus Barang - SIGMA";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/1.11.1/font/bootstrap-icons.css">
+    <script src="~/lib/sweetalert2/sweetalert2.js"></script>
+    <style>
+        @@keyframes fadeInUp {
+        from {
+        opacity: 0;
+        transform: translateY(15px);
+        }
+
+        to {
+        opacity: 1;
+        transform: translateY(0);
+        }
+        }
+
+        .animate-fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-4 py-md-5 animate-fade-in d-flex justify-content-center px-3">
+        <div class="card border-0 shadow-sm rounded-4 w-100 bg-white" style="max-width: 650px;">
+            <div class="card-body p-4 p-md-5 text-center">
+
+                <div class="mb-3">
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 70px; height: 70px;">
+                        <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                    </div>
+                </div>
+
+                <h4 class="fw-bold text-dark mb-2 fs-5 fs-md-4">Konfirmasi Penghapusan</h4>
+                <p class="text-muted small mb-4" style="font-size: 0.85rem;">
+                    Apakah Anda yakin ingin menghapus data perangkat ini dari sistem gudang? Tindakan ini akan
+                    mengarsipkan data tersebut.
+                </p>
+
+                <div class="bg-light rounded-4 p-3 p-md-4 text-start mb-4 border" style="font-size: 0.85rem;">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 col-sm-4 text-muted fw-semibold text-nowrap">Nama Perangkat</div>
+                        <div class="col-7 col-sm-8 fw-bold text-dark" id="displayNama">Memuat...</div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-5 col-sm-4 text-muted fw-semibold text-nowrap">Keterangan</div>
+                        <div class="col-7 col-sm-8 fw-semibold text-secondary" id="displayKeterangan">-</div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col-5 col-sm-4 text-muted fw-semibold text-nowrap">Kondisi</div>
+                        <div class="col-7 col-sm-8">
+                            <span id="displayKondisi" class="badge bg-dark px-3 py-1 rounded-pill fw-semibold"
+                                  style="font-size: 0.75rem;">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                    <a href="/Perangkat/Arsip"
+                       class="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-dark shadow-sm"
+                       style="font-size: 0.85rem;">Batalkan</a>
+                    <button onclick="hapusBarang()"
+                            class="btn btn-danger rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap"
+                            style="font-size: 0.85rem;">
+                        <i class="bi bi-trash-fill me-1"></i> Ya, Hapus Data
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.API_BASE_URL = '@apiBaseUrl';
+        const urlParams = new URLSearchParams(window.location.search);
+        const perangkatId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+        if (!perangkatId) {
+        Swal.fire('Peringatan', 'ID Perangkat tidak ditemukan', 'warning').then(() => {
+        window.location.href = '/Perangkat/Arsip';
+        });
+        return;
+        }
+
+        try {
+        const res = await fetch(`${window.API_BASE_URL}/api/perangkat/${perangkatId}`, { credentials: 'include' });
+        const json = await res.json();
+
+        if (json.success && json.data) {
+        document.getElementById('displayNama').innerText = json.data.nama;
+        document.getElementById('displayKeterangan').innerText = json.data.keterangan || "-";
+        document.getElementById('displayKondisi').innerText = json.data.kondisi || "-";
+        } else {
+        Swal.fire('Gagal', 'Data perangkat tidak ditemukan', 'error').then(() => {
+        window.location.href = '/Perangkat/Arsip';
+        });
+        }
+        } catch (e) {
+        console.error("Gagal menarik data perangkat.", e);
+        }
+        });
+
+        async function hapusBarang() {
+        try {
+        const res = await fetch(`${window.API_BASE_URL}/api/perangkat/${perangkatId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+        });
+        const result = await res.json();
+
+        if (result.success) {
+        Swal.fire('Terhapus!', result.message, 'success').then(() => window.location.href = '/Perangkat/Arsip');
+        } else {
+        Swal.fire('Gagal!', result.message, 'error');
+        }
+        } catch (error) {
+        Swal.fire('Gagal!', 'Tidak terhubung ke server', 'error');
+        }
+        }
+    </script>
+</body>
+
+</html>

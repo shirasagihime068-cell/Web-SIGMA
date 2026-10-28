@@ -1,0 +1,214 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Kelola Master Lokasi - SIGMA";
+}
+
+<div class="container-fluid py-4 px-3 px-md-4 animate-fade-in" style="max-width: 1400px; margin: 0 auto;">
+    <!-- FORM TAMBAH LOKASI -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-4">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-plus-circle me-2 text-danger"></i>Tambah Lokasi Baru
+            </h5>
+            <form id="formTambahLokasi" class="row g-3">
+                <div class="col-12 col-md-8">
+                    <input type="text" id="inputNamaLokasi" name="namaLokasi"
+                           class="form-control rounded-pill px-3 py-2 border shadow-sm"
+                           placeholder="Masukkan nama lokasi gudang (contoh: Gudang Utama, Gedung A)..." required />
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2 justify-content-md-end">
+                    <a href="/KelolaBarang/Index"
+                       class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm text-dark">
+                        Kembali
+                    </a>
+                    <button type="submit"
+                            class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm text-white "
+                            style="background-color: #ED1B24;">
+                        <i class="bi bi-save me-1"></i> Simpan Lokasi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABEL DAFTAR LOKASI -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white">
+        <div class="card-body p-0">
+            <div class="table-responsive p-3">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted small">
+                        <tr>
+                            <th class="py-3 text-center" style="width: 60px;">No.</th>
+                            <th class="py-3">Nama Lokasi Gudang</th>
+                            <th class="py-3 text-center" style="width: 150px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lokasiTableBody">
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">
+                                <span class="spinner-border spinner-border-sm me-2"></span>Memuat data lokasi...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+    <script>
+        window.API_BASE_URL = '@apiBaseUrl';
+
+        document.addEventListener("DOMContentLoaded", function () {
+        loadLokasiData();
+
+        // Handle Submit Form Tambah Lokasi
+        document.getElementById('formTambahLokasi').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const namaLokasi = document.getElementById('inputNamaLokasi').value.trim();
+        if (!namaLokasi) return;
+
+        try {
+        const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/lokasi`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ NamaLokasi: namaLokasi }),
+        credentials: 'include'
+        });
+
+        if (response.status === 401) {
+        window.location.href = '/Auth/Login';
+        return;
+        }
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+        document.getElementById('formTambahLokasi').reset();
+        Swal.fire({
+        title: 'Berhasil!',
+        text: result.message || 'Lokasi berhasil ditambahkan.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: { popup: 'rounded-4 shadow-lg' }
+        });
+        await loadLokasiData();
+        await window.refreshSigmaNotifications?.();
+        } else {
+        Swal.fire('Gagal!', result.message || 'Terjadi kesalahan.', 'error');
+        }
+        } catch (error) {
+        Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+        }
+        });
+        });
+
+        // Load data lokasi dari API
+        async function loadLokasiData() {
+        try {
+        const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/lokasi`, {
+        method: 'GET',
+        credentials: 'include'
+        });
+
+        if (response.status === 401) {
+        window.location.href = '/Auth/Login';
+        return;
+        }
+
+        const resData = await response.json();
+        const tbody = document.getElementById('lokasiTableBody');
+        tbody.innerHTML = '';
+
+        const items = Array.isArray(resData) ? resData : (resData.data || []);
+
+        if (!items || items.length === 0) {
+        tbody.innerHTML = `
+        <tr>
+        <td colspan="3" class="text-center py-5 text-muted">
+        <i class="bi bi-geo-alt display-6 d-block mb-2 text-secondary opacity-50"></i>
+        <span class="fw-semibold">Belum ada data lokasi yang terdaftar.</span>
+        </td>
+        </tr>`;
+        return;
+        }
+
+        items.forEach((item, index) => {
+        const id = Number(item.id || item.Id || 0);
+        const rawNamaLokasi = item.namaLokasi || item.NamaLokasi || '-';
+        const namaLokasi = window.escapeHtml(rawNamaLokasi);
+
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td class="text-center fw-semibold text-muted">${index + 1}</td>
+        <td class="fw-bold text-dark">${namaLokasi}</td>
+        <td class="text-center">
+        <button type="button"
+        class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm"
+        style="font-size: 0.75rem; background-color: #ED1B24;"
+        onclick="konfirmasiHapusLokasi(${Number(id)}, decodeURIComponent('${encodeURIComponent(rawNamaLokasi).replace(/'/g, '%27')}'))">
+        <i class="bi bi-trash me-1"></i> Hapus
+        </button>
+        </td>
+        `;
+        tbody.appendChild(tr);
+        });
+        } catch (error) {
+        console.error('Gagal memuat lokasi:', error);
+        document.getElementById('lokasiTableBody').innerHTML = `
+        <tr><td colspan="3" class="text-center py-5 text-danger">Gagal terhubung ke server backend.</td></tr>`;
+        }
+        }
+
+        // Konfirmasi Hapus Lokasi menggunakan SweetAlert2
+        function konfirmasiHapusLokasi(id, nama) {
+        Swal.fire({
+        title: 'Apakah Anda yakin?',
+        text: `Apakah Anda yakin ingin menghapus lokasi "${nama}" ini?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ED1B24',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        customClass: { popup: 'rounded-4 shadow-lg' },
+        backdrop: `rgba(0,0,0,0.5)`
+        }).then(async (result) => {
+        if (result.isConfirmed) {
+        try {
+        const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/lokasi/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+        });
+
+        const resJson = await response.json().catch(() => ({ success: response.ok }));
+
+        if (response.ok && (resJson.success !== false)) {
+        Swal.fire({
+        title: 'Terhapus!',
+        text: resJson.message || 'Lokasi berhasil dihapus.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: { popup: 'rounded-4 shadow-lg' }
+        });
+        await loadLokasiData();
+        await window.refreshSigmaNotifications?.();
+        } else {
+        Swal.fire('Gagal!', resJson.message || 'Terjadi kesalahan saat menghapus.', 'error');
+        }
+        } catch (error) {
+        Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+        }
+        }
+        });
+        }
+    </script>
+}

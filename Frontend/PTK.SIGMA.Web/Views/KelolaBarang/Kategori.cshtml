@@ -1,0 +1,144 @@
+@{
+    ViewData["Title"] = "Kelola Kategori Barang - SIGMA";
+}
+
+<div class="management-page">
+    <section class="management-toolbar">
+        <div class="management-title">
+            <span class="management-title-icon"><i class="bi bi-tags-fill"></i></span>
+            <div><h2>Kategori Barang</h2><p>Kelola klasifikasi perangkat tanpa meninggalkan halaman ini.</p></div>
+        </div>
+        <div class="management-toolbar-actions">
+            <a href="/KelolaBarang/Index" class="btn btn-light"><i class="bi bi-arrow-left"></i>Kembali</a>
+            <button type="button" class="btn btn-primary" onclick="openCategoryModal()"><i class="bi bi-plus-lg"></i>Tambah Kategori</button>
+        </div>
+    </section>
+
+    <section class="management-card">
+        <div class="management-filter-row">
+            <div class="management-search"><i class="bi bi-search"></i><input id="categorySearch" type="search" placeholder="Cari nama kategori..." autocomplete="off" /></div>
+            <span id="categorySummary" class="management-summary">0 kategori</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table management-table align-middle">
+                <thead><tr><th class="text-center">No.</th><th>Nama Kategori</th><th class="text-center">Aksi</th></tr></thead>
+                <tbody id="kategoriTableBody"><tr><td colspan="3" class="management-empty">Memuat kategori...</td></tr></tbody>
+            </table>
+        </div>
+        <nav class="management-pagination" aria-label="Navigasi kategori"><ul id="categoryPagination" class="pagination"></ul></nav>
+    </section>
+</div>
+
+@section Modals {
+    <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalTitle" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="categoryForm">
+                    <div class="modal-header"><div><span class="modal-kicker">Master Data</span><h5 id="categoryModalTitle" class="modal-title">Tambah Kategori</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+                    <div class="modal-body">
+                        <input type="hidden" id="categoryId" />
+                        <label class="form-label" for="categoryName">Nama Kategori <span class="text-danger">*</span></label>
+                        <div class="input-group"><span class="input-group-text"><i class="bi bi-tag"></i></span><input class="form-control" id="categoryName" maxlength="100" placeholder="Contoh: Perangkat Jaringan" required /></div>
+                        <div id="categoryError" class="form-error" role="alert"></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button><button id="categorySubmit" type="submit" class="btn btn-primary"><i class="bi bi-check2"></i>Simpan Kategori</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    let categories = [];
+    let categoryPage = 1;
+    const categoryPageSize = 8;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('categorySearch').addEventListener('input', () => { categoryPage = 1; renderCategories(); });
+        document.getElementById('categoryForm').addEventListener('submit', saveCategory);
+        loadCategories();
+    });
+
+    async function loadCategories() {
+        try {
+            const response = await fetch('/api/kelolabarang/kategori', { credentials: 'include' });
+            if (response.status === 401) { window.location.href = '/Auth/Login'; return; }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            categories = Array.isArray(result) ? result : (result.data || result.kategoriList || []);
+            renderCategories();
+        } catch (error) {
+            console.error('Gagal memuat kategori:', error);
+            document.getElementById('kategoriTableBody').innerHTML = '<tr><td colspan="3" class="management-empty text-danger">Kategori belum dapat dimuat.</td></tr>';
+        }
+    }
+
+    function renderCategories() {
+        const keyword = document.getElementById('categorySearch').value.trim().toLowerCase();
+        const filtered = categories.filter(item => getCategoryName(item).toLowerCase().includes(keyword));
+        const totalPages = Math.max(1, Math.ceil(filtered.length / categoryPageSize));
+        categoryPage = Math.min(categoryPage, totalPages);
+        const rows = filtered.slice((categoryPage - 1) * categoryPageSize, categoryPage * categoryPageSize);
+        document.getElementById('categorySummary').textContent = `${filtered.length} kategori`;
+        const tbody = document.getElementById('kategoriTableBody');
+        if (!rows.length) { tbody.innerHTML = '<tr><td colspan="3" class="management-empty"><i class="bi bi-inbox"></i>Data kategori tidak ditemukan.</td></tr>'; }
+        else {
+            tbody.innerHTML = rows.map((item, index) => {
+                const id = item.id ?? item.Id;
+                const name = getCategoryName(item);
+                return `<tr><td class="text-center">${((categoryPage - 1) * categoryPageSize) + index + 1}</td><td><span class="management-name-icon"><i class="bi bi-tag-fill"></i></span><strong>${escapeHtml(name)}</strong></td><td><div class="management-row-actions"><button type="button" class="action-edit" data-edit-id="${id}" title="Edit kategori"><i class="bi bi-pencil-square"></i>Edit</button><button type="button" class="action-delete" data-delete-id="${id}" title="Hapus kategori"><i class="bi bi-trash3"></i>Hapus</button></div></td></tr>`;
+            }).join('');
+            tbody.querySelectorAll('[data-edit-id]').forEach(button => button.addEventListener('click', () => openCategoryModal(Number(button.dataset.editId))));
+            tbody.querySelectorAll('[data-delete-id]').forEach(button => button.addEventListener('click', () => deleteCategory(Number(button.dataset.deleteId))));
+        }
+        renderManagementPagination('categoryPagination', totalPages, categoryPage, page => { categoryPage = page; renderCategories(); });
+    }
+
+    function openCategoryModal(id = null) {
+        const item = id == null ? null : categories.find(value => Number(value.id ?? value.Id) === Number(id));
+        document.getElementById('categoryId').value = id ?? '';
+        document.getElementById('categoryName').value = item ? getCategoryName(item) : '';
+        document.getElementById('categoryError').textContent = '';
+        document.getElementById('categoryModalTitle').textContent = item ? 'Edit Kategori' : 'Tambah Kategori';
+        document.getElementById('categorySubmit').innerHTML = item ? '<i class="bi bi-check2"></i>Simpan Perubahan' : '<i class="bi bi-check2"></i>Simpan Kategori';
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal'));
+        modal.show();
+        document.getElementById('categoryModal').addEventListener('shown.bs.modal', () => document.getElementById('categoryName').focus(), { once: true });
+    }
+
+    async function saveCategory(event) {
+        event.preventDefault();
+        const id = document.getElementById('categoryId').value;
+        const name = document.getElementById('categoryName').value.trim();
+        const error = document.getElementById('categoryError');
+        if (!name) { error.textContent = 'Nama kategori wajib diisi.'; return; }
+        error.textContent = '';
+        const button = document.getElementById('categorySubmit'); button.disabled = true;
+        try {
+            const response = await fetch(id ? `/api/kelolabarang/kategori/${id}` : '/api/kelolabarang/kategori', { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ NamaKategori: name }) });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) throw new Error(result.message || 'Kategori belum dapat disimpan.');
+            bootstrap.Modal.getInstance(document.getElementById('categoryModal'))?.hide();
+            await loadCategories();
+            await window.refreshSigmaNotifications?.();
+            Swal.fire({ icon: 'success', title: 'Berhasil', text: result.message || 'Kategori berhasil disimpan.', timer: 1500, showConfirmButton: false });
+        } catch (saveError) { error.textContent = saveError.message; }
+        finally { button.disabled = false; }
+    }
+
+    async function deleteCategory(id) {
+        const item = categories.find(value => Number(value.id ?? value.Id) === Number(id));
+        const confirmation = await Swal.fire({ title: 'Hapus kategori?', text: `Kategori "${getCategoryName(item)}" akan dihapus.`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, hapus', cancelButtonText: 'Batal', confirmButtonColor: '#ed1b2f' });
+        if (!confirmation.isConfirmed) return;
+        const response = await fetch(`/api/kelolabarang/kategori/${id}`, { method: 'DELETE', credentials: 'include' });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success !== false) { await loadCategories(); await window.refreshSigmaNotifications?.(); Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1200, showConfirmButton: false }); }
+        else Swal.fire('Gagal', result.message || 'Kategori belum dapat dihapus.', 'error');
+    }
+
+    function getCategoryName(item) { return item?.namaKategori ?? item?.NamaKategori ?? '-'; }
+    function renderManagementPagination(targetId, total, active, select) { const host = document.getElementById(targetId); if (total <= 1) { host.innerHTML = ''; return; } const parts = [`<li class="page-item ${active === 1 ? 'disabled' : ''}"><button type="button" class="page-link" data-page="${active - 1}"><i class="bi bi-chevron-left"></i></button></li>`]; for (let page = 1; page <= total; page++) parts.push(`<li class="page-item ${page === active ? 'active' : ''}"><button type="button" class="page-link" data-page="${page}">${page}</button></li>`); parts.push(`<li class="page-item ${active === total ? 'disabled' : ''}"><button type="button" class="page-link" data-page="${active + 1}"><i class="bi bi-chevron-right"></i></button></li>`); host.innerHTML = parts.join(''); host.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => select(Number(button.dataset.page)))); }
+    function escapeHtml(value) { return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;'); }
+</script>
+}

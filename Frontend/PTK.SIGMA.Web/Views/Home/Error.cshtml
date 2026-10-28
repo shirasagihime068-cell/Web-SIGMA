@@ -1,0 +1,13 @@
+@model PTK.SIGMA.Web.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Terjadi Kesalahan";
+}
+<div class="container py-5">
+    <div class="alert alert-danger rounded-4 shadow-sm">
+        Terjadi kesalahan saat memproses permintaan.
+        @if (Model.ShowRequestId)
+        {
+            <div class="small mt-2">Request ID: @Model.RequestId</div>
+        }
+    </div>
+</div>

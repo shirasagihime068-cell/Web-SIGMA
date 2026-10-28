@@ -1,0 +1,13 @@
+Backend integration static checks
+================================
+Project references resolve: PASS
+Frontend return URL configuration is no longer used by API: PASS
+API HTTPS profile: https://localhost:5052
+API HTTP fallback profile: http://localhost:5000
+JSON string enum converter enabled for frontend role payloads: PASS
+Shared authentication cookie name matches MVC frontend: PASS
+Shared DataProtection application name matches MVC frontend: PASS
+Local database role enrichment for shared cookie: PASS
+Dashboard includes borrowedUnits: PASS
+Dashboard includes categoryDistribution: PASS
+Dashboard includes monthlyTrend: PASS

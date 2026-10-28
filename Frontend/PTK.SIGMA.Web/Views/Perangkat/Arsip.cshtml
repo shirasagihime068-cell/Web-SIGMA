@@ -1,0 +1,313 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    // Menghapus 'Layout = null;' agar otomatis menggunakan _Layout.cshtml
+    ViewData["Title"] = "Arsip Inventaris - SIGMA";
+    var apiBaseUrl = "";
+}
+
+@section Styles {
+    <style>
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+
+        .card-sigma {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background: white;
+        }
+    </style>
+}
+
+<div class="card card-sigma archive-inventory-card w-100">
+
+        <!-- CARD HEADER -->
+        <div
+            class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between flex-wrap gap-3 rounded-top-4">
+            <div class="d-flex align-items-center">
+                <div class="archive-heading-icon d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                     style="width: 45px; height: 45px;">
+                    <i class="bi bi-archive fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Arsip Inventaris</h5>
+                    <p class="text-muted small m-0 mt-1">Daftar barang gudang yang telah diarsipkan.</p>
+                </div>
+            </div>
+            <div>
+                <!-- Mengarahkan tombol kembali ke /Home/Index -->
+                <a href="/Home/Index"
+                   class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm text-dark"
+                   style="font-size: 0.85rem;">
+                    Kembali
+                </a>
+            </div>
+        </div>
+
+        <!-- CARD BODY / TABEL -->
+        <div class="card-body p-4 p-md-5">
+            <div class="row g-3 mb-4 align-items-end archive-filter-grid">
+                <div class="col-12 col-md-7">
+                    <label for="archiveSearch" class="form-label">Cari perangkat</label>
+                    <div class="archive-search-shell">
+                        <i class="bi bi-search"></i>
+                        <input id="archiveSearch" type="search" placeholder="Nama perangkat atau serial number..." />
+                        <button id="archiveSearchButton" type="button" class="btn btn-primary"><i class="bi bi-search"></i> Cari</button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-5">
+                    <label for="archiveCategory" class="form-label">Kategori</label>
+                    <select id="archiveCategory" class="form-select"><option value="">Semua kategori</option></select>
+                </div>
+            </div>
+            <div class="table-responsive archive-table-responsive">
+                <table class="table table-hover align-middle mb-0 archive-device-table" style="font-size: 0.85rem;">
+                    <thead class="table-light text-uppercase small text-muted">
+                        <tr>
+                            <th class="py-3 ps-3">Nama Perangkat</th>
+                            <th class="py-3">Kategori</th>
+                            <th class="py-3">Serial Number (SN)</th>
+                            <th class="py-3 text-center pe-3" style="width: 280px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="arsipTableBody">
+                        <!-- Data akan dimuat secara dinamis via JavaScript API Fetch -->
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+                                Memuat data arsip...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center gap-3 mt-3 flex-wrap">
+                <small id="archiveSummary" class="text-muted">Memuat arsip...</small>
+                <nav aria-label="Halaman arsip"><ul id="archivePagination" class="pagination mb-0"></ul></nav>
+            </div>
+        </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        window.API_BASE_URL = '@apiBaseUrl';
+        let archivedItems = [];
+        let archivePage = 1;
+        let currentArchiveRole = '';
+        const getArchivePageSize = () => window.matchMedia('(max-width: 575.98px)').matches ? 4 : 8;
+
+        // Fungsi untuk mengambil data arsip dari backend API
+        async function loadArsipData() {
+            const tbody = document.getElementById('arsipTableBody');
+
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/perangkat/arsip`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    archivedItems = result.data;
+                    const categories = [...new Set(archivedItems.map(item => item.kategori).filter(Boolean))].sort();
+                    document.getElementById('archiveCategory').innerHTML = '<option value="">Semua kategori</option>' +
+                        categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
+                    archivePage = 1;
+                    renderArchiveTable();
+                } else {
+                    archivedItems = [];
+                    renderArchiveTable();
+                }
+            } catch (error) {
+                console.error('Gagal memuat arsip:', error);
+                tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-danger">
+                                <i class="bi bi-exclamation-triangle fs-2 d-block mb-2"></i>
+                                Terjadi kesalahan saat menghubungkan ke server API.
+                            </td>
+                        </tr>
+                    `;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            })[character]);
+        }
+
+        function renderArchiveTable() {
+            const tbody = document.getElementById('arsipTableBody');
+            const query = document.getElementById('archiveSearch').value.trim().toLowerCase();
+            const category = document.getElementById('archiveCategory').value;
+            const filtered = archivedItems.filter(item => {
+                const matchesQuery = !query || `${item.nama || ''} ${item.snLaptop || ''}`.toLowerCase().includes(query);
+                return matchesQuery && (!category || item.kategori === category);
+            });
+            const archivePageSize = getArchivePageSize();
+            const totalPages = Math.max(1, Math.ceil(filtered.length / archivePageSize));
+            archivePage = Math.min(archivePage, totalPages);
+            const pageItems = filtered.slice((archivePage - 1) * archivePageSize, archivePage * archivePageSize);
+
+            if (pageItems.length) {
+                let html = '';
+                pageItems.forEach(item => {
+                        const sn = item.snLaptop ? item.snLaptop : '-';
+                        const actions = currentArchiveRole.toLowerCase() === 'admin' ? `
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-success" onclick="restoreItem(${Number(item.id)})">
+                                    <i class="bi bi-arrow-counterclockwise"></i><span>Restore</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="permanentDelete(${Number(item.id)}, decodeURIComponent('${encodeURIComponent(String(item.nama || 'Perangkat')).replace(/'/g, '%27')}'))">
+                                    <i class="bi bi-trash"></i><span>Hapus permanen</span>
+                                </button>
+                            </div>` : '<span class="badge bg-light text-muted border">Hanya Admin</span>';
+                        html += `
+                                <tr>
+                                    <td data-label="Nama perangkat" class="fw-bold text-dark ps-3">${escapeHtml(item.nama || '-')}</td>
+                                    <td data-label="Kategori">
+                                        <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">
+                                            ${escapeHtml(item.kategori || 'Umum')}
+                                        </span>
+                                    </td>
+                                    <td data-label="Serial number" class="text-muted">${escapeHtml(sn)}</td>
+                                    <td data-label="Aksi" class="text-center pe-3">${actions}</td>
+                                </tr>
+                            `;
+                });
+                tbody.innerHTML = html;
+            } else {
+                    tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                                    Tidak ada perangkat di dalam arsip saat ini.
+                                </td>
+                            </tr>
+                        `;
+            }
+
+            document.getElementById('archiveSummary').textContent = `${filtered.length} perangkat di arsip`;
+            const pagination = document.getElementById('archivePagination');
+            pagination.innerHTML = Array.from({ length: totalPages }, (_, index) => index + 1).map(page =>
+                `<li class="page-item ${page === archivePage ? 'active' : ''}"><button class="page-link" type="button" onclick="changeArchivePage(${page})">${page}</button></li>`
+            ).join('');
+        }
+
+        function changeArchivePage(page) { archivePage = page; renderArchiveTable(); }
+
+        // Fungsi Pemulihan (Restore) Perangkat
+        async function restoreItem(id) {
+            const confirm = await Swal.fire({
+                title: 'Pulihkan Perangkat?',
+                text: "Perangkat akan dikembalikan dari arsip ke daftar inventaris utama.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Pulihkan',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'rounded-4 shadow-lg' }
+            });
+
+            if (confirm.isConfirmed) {
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/perangkat/${id}/restore`, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: result.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        loadArsipData();
+                    } else {
+                        Swal.fire('Gagal', result.message || 'Gagal memulihkan perangkat.', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error restore:', err);
+                    Swal.fire('Error', 'Terjadi kesalahan pada jaringan.', 'error');
+                }
+            }
+        }
+
+        // Fungsi Penghapusan Permanen Perangkat
+        async function permanentDelete(id, name) {
+            const confirm = await Swal.fire({
+                title: 'Hapus Permanen Perangkat?',
+                text: `Data perangkat "${name}" akan dihapus secara permanen dari database dan tidak dapat dikembalikan.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ED1B24',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus Permanen',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'rounded-4 shadow-lg' }
+            });
+
+            if (confirm.isConfirmed) {
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/perangkat/${id}/permanent`, {
+                        method: 'DELETE',
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Terhapus!',
+                            text: result.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        loadArsipData();
+                    } else {
+                        Swal.fire('Gagal', result.message || 'Gagal menghapus permanen perangkat.', 'error');
+                    }
+                } catch (err) {
+                    console.error('Error permanent delete:', err);
+                    Swal.fire('Error', 'Terjadi kesalahan pada jaringan.', 'error');
+                }
+            }
+        }
+
+        // Muat data saat halaman selesai dirender
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById('archiveSearch').addEventListener('input', () => { archivePage = 1; renderArchiveTable(); });
+            document.getElementById('archiveSearchButton').addEventListener('click', () => { archivePage = 1; renderArchiveTable(); });
+            document.getElementById('archiveCategory').addEventListener('change', () => { archivePage = 1; renderArchiveTable(); });
+            fetch(`${window.API_BASE_URL}/api/home/user-info`, { credentials: 'include' })
+                .then(response => response.ok ? response.json() : null)
+                .then(result => { currentArchiveRole = result?.role || ''; })
+                .finally(loadArsipData);
+        });
+    </script>
+}

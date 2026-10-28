@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "Manajemen Lokasi Rak - SIGMA";
+}
+
+<div class="management-page management-page-compact">
+    <section class="management-toolbar">
+        <div class="management-title">
+            <span class="management-title-icon"><i class="bi bi-layers-fill"></i></span>
+            <div><h2>Lokasi Rak Gudang</h2><p>Kelola area penyimpanan secara ringkas dan terpusat.</p></div>
+        </div>
+        <div class="management-toolbar-actions">
+            <a href="/KelolaBarang/Index" class="btn btn-light"><i class="bi bi-arrow-left"></i>Kembali</a>
+            <button type="button" class="btn btn-primary" onclick="openRackModal()"><i class="bi bi-plus-lg"></i>Tambah Rak</button>
+        </div>
+    </section>
+
+    <section class="management-card">
+        <div class="management-filter-row">
+            <div class="management-search"><i class="bi bi-search"></i><input id="rackSearch" type="search" placeholder="Cari nama rak atau lokasi..." autocomplete="off" /></div>
+            <span id="rackSummary" class="management-summary">0 rak</span>
+        </div>
+        <div id="rackAlphaFilters" class="rack-alpha-filters" aria-label="Filter rak berdasarkan huruf"></div>
+        <div class="rack-grid-wrap">
+            <div id="rackGrid" class="rack-grid"><div class="rack-grid-empty">Memuat lokasi rak...</div></div>
+        </div>
+        <nav class="management-pagination" aria-label="Navigasi rak"><ul id="rackPagination" class="pagination"></ul></nav>
+    </section>
+</div>
+
+@section Modals {
+    <div class="modal fade" id="rackModal" tabindex="-1" aria-labelledby="rackModalTitle" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="rackForm">
+                    <div class="modal-header"><div><span class="modal-kicker">Master Lokasi</span><h5 id="rackModalTitle" class="modal-title">Tambah Lokasi Rak</h5></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label" for="rackName">Nama Rak / Lokasi <span class="text-danger">*</span></label>
+                        <div class="input-group"><span class="input-group-text"><i class="bi bi-layers"></i></span><input class="form-control" id="rackName" maxlength="100" placeholder="Contoh: Rak A-01" required /></div>
+                        <div id="rackError" class="form-error" role="alert"></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button><button id="rackSubmit" type="submit" class="btn btn-primary"><i class="bi bi-check2"></i>Simpan Rak</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    let racks = [];
+    let rackPage = 1;
+    let rackLetter = '';
+    const rackPageSize = 16;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('rackSearch').addEventListener('input', () => { rackPage = 1; renderRacks(); });
+        document.getElementById('rackForm').addEventListener('submit', saveRack);
+        loadRacks();
+    });
+
+    async function loadRacks() {
+        try {
+            const response = await fetch('/api/kelolabarang/rak', { credentials: 'include' });
+            if (response.status === 401) { window.location.href = '/Auth/Login'; return; }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            racks = Array.isArray(result) ? result : (result.data || []);
+            renderRackLetterFilters();
+            renderRacks();
+        } catch (error) {
+            console.error('Gagal memuat rak:', error);
+            document.getElementById('rackGrid').innerHTML = '<div class="rack-grid-empty text-danger">Lokasi rak belum dapat dimuat.</div>';
+        }
+    }
+
+    function renderRacks() {
+        const keyword = document.getElementById('rackSearch').value.trim().toLowerCase();
+        const filtered = racks.filter(item => {
+            const name = getRackName(item);
+            return name.toLowerCase().includes(keyword) && (!rackLetter || getRackLetter(name) === rackLetter);
+        });
+        const totalPages = Math.max(1, Math.ceil(filtered.length / rackPageSize));
+        rackPage = Math.min(rackPage, totalPages);
+        const rows = filtered.slice((rackPage - 1) * rackPageSize, rackPage * rackPageSize);
+        document.getElementById('rackSummary').textContent = `${filtered.length} rak`;
+        const grid = document.getElementById('rackGrid');
+        if (!rows.length) grid.innerHTML = '<div class="rack-grid-empty"><i class="bi bi-inbox"></i><span>Lokasi rak tidak ditemukan.</span></div>';
+        else {
+            grid.innerHTML = rows.map((item, index) => {
+                const id = item.id ?? item.Id;
+                const name = getRackName(item);
+                const number = ((rackPage - 1) * rackPageSize) + index + 1;
+                return `<article class="rack-card"><span class="rack-card-number">${number}</span><span class="rack-card-icon"><i class="bi bi-layers-fill"></i></span><strong title="${escapeHtml(name)}">${escapeHtml(name)}</strong><button type="button" class="rack-delete-button" data-delete-id="${id}" aria-label="Hapus ${escapeHtml(name)}" title="Hapus"><i class="bi bi-trash3"></i></button></article>`;
+            }).join('');
+            grid.querySelectorAll('[data-delete-id]').forEach(button => button.addEventListener('click', () => deleteRack(Number(button.dataset.deleteId))));
+        }
+        renderRackPagination(totalPages);
+    }
+
+    function renderRackLetterFilters() {
+        const letters = [...new Set(racks.map(item => getRackLetter(getRackName(item))))].filter(Boolean).sort();
+        const host = document.getElementById('rackAlphaFilters');
+        host.innerHTML = [`<button type="button" class="rack-letter-button ${rackLetter === '' ? 'active' : ''}" data-letter="">Semua</button>`, ...letters.map(letter => `<button type="button" class="rack-letter-button ${rackLetter === letter ? 'active' : ''}" data-letter="${escapeHtml(letter)}">${escapeHtml(letter)}</button>`)].join('');
+        host.querySelectorAll('[data-letter]').forEach(button => button.addEventListener('click', () => {
+            rackLetter = button.dataset.letter || '';
+            rackPage = 1;
+            renderRackLetterFilters();
+            renderRacks();
+        }));
+    }
+
+    function renderRackPagination(totalPages) {
+        const host = document.getElementById('rackPagination');
+        if (totalPages <= 1) { host.innerHTML = ''; return; }
+        const parts = [`<li class="page-item ${rackPage === 1 ? 'disabled' : ''}"><button type="button" class="page-link" data-page="${rackPage - 1}"><i class="bi bi-chevron-left"></i></button></li>`];
+        for (let page = 1; page <= totalPages; page++) parts.push(`<li class="page-item ${page === rackPage ? 'active' : ''}"><button type="button" class="page-link" data-page="${page}">${page}</button></li>`);
+        parts.push(`<li class="page-item ${rackPage === totalPages ? 'disabled' : ''}"><button type="button" class="page-link" data-page="${rackPage + 1}"><i class="bi bi-chevron-right"></i></button></li>`);
+        host.innerHTML = parts.join('');
+        host.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => { rackPage = Number(button.dataset.page); renderRacks(); }));
+    }
+
+    function openRackModal() {
+        document.getElementById('rackForm').reset();
+        document.getElementById('rackError').textContent = '';
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('rackModal'));
+        modal.show();
+        document.getElementById('rackModal').addEventListener('shown.bs.modal', () => document.getElementById('rackName').focus(), { once: true });
+    }
+
+    async function saveRack(event) {
+        event.preventDefault();
+        const name = document.getElementById('rackName').value.trim();
+        const error = document.getElementById('rackError');
+        if (!name) { error.textContent = 'Nama rak wajib diisi.'; return; }
+        error.textContent = '';
+        const button = document.getElementById('rackSubmit'); button.disabled = true;
+        try {
+            const response = await fetch('/api/kelolabarang/rak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ NamaRak: name }) });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) throw new Error(result.message || 'Rak belum dapat disimpan.');
+            bootstrap.Modal.getInstance(document.getElementById('rackModal'))?.hide();
+            await loadRacks();
+            await window.refreshSigmaNotifications?.();
+            Swal.fire({ icon: 'success', title: 'Berhasil', text: result.message || 'Lokasi rak berhasil disimpan.', timer: 1500, showConfirmButton: false });
+        } catch (saveError) { error.textContent = saveError.message; }
+        finally { button.disabled = false; }
+    }
+
+    async function deleteRack(id) {
+        const item = racks.find(value => Number(value.id ?? value.Id) === Number(id));
+        const confirmation = await Swal.fire({ title: 'Hapus lokasi rak?', text: `Rak "${getRackName(item)}" akan dihapus.`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, hapus', cancelButtonText: 'Batal', confirmButtonColor: '#ed1b2f' });
+        if (!confirmation.isConfirmed) return;
+        const response = await fetch(`/api/kelolabarang/rak/${id}`, { method: 'DELETE', credentials: 'include' });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success !== false) { await loadRacks(); await window.refreshSigmaNotifications?.(); Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1200, showConfirmButton: false }); }
+        else Swal.fire('Gagal', result.message || 'Lokasi rak belum dapat dihapus.', 'error');
+    }
+
+    function getRackName(item) { return item?.namaRak ?? item?.NamaRak ?? '-'; }
+    function getRackLetter(value) { return String(value || '').trim().match(/[a-z]/i)?.[0]?.toUpperCase() || '#'; }
+    function escapeHtml(value) { return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;'); }
+</script>
+}

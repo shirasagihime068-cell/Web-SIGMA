@@ -1,0 +1,365 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Catat Barang Masuk - SIGMA";
+}
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    .form-container {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 30px 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #e6f9ed;
+        color: #198754;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-select-input {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        color: #212529;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .custom-select-input:hover,
+    .custom-select-input.active {
+        border-color: #003876;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15);
+        background-color: white;
+    }
+
+    .custom-dropdown-list {
+        position: absolute;
+        z-index: 1050;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        margin-top: 8px;
+        border: 1px solid #dcdcdc;
+        padding: 10px 0;
+    }
+
+    .dropdown-item-custom {
+        cursor: pointer;
+        padding: 8px 20px;
+        color: #333;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #e6f0fa;
+        color: #003876;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+    }
+</style>
+
+<!-- KONTEN UTAMA -->
+<div class="container py-4 py-md-5 animate-fade-in d-flex justify-content-center px-3">
+    <div class="card border-0 shadow-sm rounded-4 w-100 bg-white" style="max-width: 800px;">
+        <div class="card-header bg-white border-bottom p-4 d-flex align-items-center rounded-top-4">
+            <div class="header-icon me-3 shadow-sm flex-shrink-0">
+                <i class="bi bi-box-arrow-in-down fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Catat Barang Masuk</h5>
+                <p class="text-muted small m-0 mt-1">Form penerimaan stok barang baru (vendor otomatis dari data
+                    barang).</p>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5" style="font-size: 0.85rem;">
+                <form id="formBarangMasuk">
+                    <div id="validationSummary" class="text-danger small mb-3"></div>
+
+                    <!-- Tanggal Masuk (Tanpa Jam) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small text-uppercase"
+                               style="letter-spacing: 0.5px;">Tanggal Masuk <span class="text-danger">*</span></label>
+                        <input type="date" id="inputTanggalMasuk"
+                               class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                               required />
+                    </div>
+
+                    <!-- Kategori Filter -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small text-uppercase"
+                               style="letter-spacing: 0.5px;">Filter Kategori Barang</label>
+                        <div class="custom-dropdown-container">
+                            <div class="custom-select-input shadow-sm rounded-pill px-3 py-2 bg-light border"
+                                 id="kategoriSelectBox" onclick="toggleKategoriDropdown()">
+                                <span id="kategoriSelectedText"> Semua Kategori </span>
+                                <i class="bi bi-chevron-down"></i>
+                            </div>
+                            <input type="hidden" id="filterKategoriValue" value="">
+                            <div class="custom-dropdown-list shadow-lg" id="kategoriDropdownList">
+                                <div class="dropdown-item-custom fw-semibold"
+                                     onclick="selectKategori('', ' Semua Kategori ')"> Semua Kategori </div>
+                                <!-- Dinamis dimuat via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pilih Perangkat -->
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-semibold text-dark small text-uppercase"
+                               style="letter-spacing: 0.5px;">Pilih Perangkat / Barang <span
+                            class="text-danger">*</span></label>
+                            <input type="text" id="searchInput"
+                                   class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                   placeholder="Ketik untuk mencari perangkat..." onkeyup="performSearch()" autocomplete="off"
+                                   required />
+                            <div id="resultsDropdown" class="custom-dropdown-list shadow-lg"></div>
+                            <input type="hidden" id="hiddenPerangkatId" required />
+                        </div>
+
+                        <!-- Jumlah Masuk -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark small text-uppercase"
+                                   style="letter-spacing: 0.5px;">Jumlah Masuk (Unit) <span class="text-danger">*</span></label>
+                            <input type="number" id="inputJumlah"
+                                   class="form-control rounded-pill py-2.5 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                   min="1" placeholder="Masukan jumlah..." required />
+                        </div>
+
+                        <!-- Keterangan -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-dark small text-uppercase"
+                                   style="letter-spacing: 0.5px;">Keterangan / Catatan</label>
+                            <textarea id="inputKeterangan"
+                                      class="form-control rounded-3 py-2 px-3 bg-light border shadow-sm fw-semibold text-dark"
+                                      rows="3" placeholder="Berikan keterangan..." style="resize: none;"></textarea>
+                        </div>
+
+                        <!-- TOMBOL AKSI -->
+                        <div class="d-flex flex-column-reverse flex-md-row justify-content-end gap-2 pt-3 border-top">
+                            <a href="/KelolaBarang/Index"
+                               class="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-dark shadow-sm text-center"
+                               style="font-size: 0.85rem;">Batal</a>
+                            <button type="submit"
+                                    class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap text-center"
+                                    style="font-size: 0.85rem;">
+                                <i class="bi bi-save me-1"></i> Simpan Barang Masuk
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @section Scripts {
+            <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+            <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+            <script>
+                window.API_BASE_URL = '@apiBaseUrl';
+                let semuaPerangkat = [];
+
+                document.addEventListener("DOMContentLoaded", function () {
+                // Set tanggal default hari ini
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('inputTanggalMasuk').value = today;
+
+                // Ambil data options dari API Backend
+                loadFormOptions();
+
+                // Handle Submit Form Barang Masuk
+                document.getElementById('formBarangMasuk').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const perangkatId = document.getElementById('hiddenPerangkatId').value;
+                const jumlah = document.getElementById('inputJumlah').value;
+                const keterangan = document.getElementById('inputKeterangan').value.trim();
+
+                if (!perangkatId) {
+                Swal.fire('Perhatian', 'Silakan pilih perangkat terlebih dahulu dari daftar.', 'warning');
+                return;
+                }
+
+                const payload = {
+                TanggalMasuk: document.getElementById('inputTanggalMasuk').value,
+                PerangkatId: parseInt(perangkatId),
+                Jumlah: parseInt(jumlah),
+                Keterangan: keterangan
+                };
+
+                try {
+                const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/masuk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                window.location.href = '/Auth/Login';
+                return;
+                }
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                Swal.fire({
+                title: 'Berhasil!',
+                text: result.message || 'Pengajuan barang masuk berhasil dikirim.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                customClass: { popup: 'rounded-4 shadow-lg' }
+                }).then(() => {
+                window.location.href = '/KelolaBarang/Index';
+                });
+                } else {
+                Swal.fire('Gagal!', result.message || 'Terjadi kesalahan.', 'error');
+                }
+                } catch (error) {
+                Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+                }
+                });
+                });
+
+                async function loadFormOptions() {
+                try {
+                const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/masuk/options`, {
+                method: 'GET',
+                credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                window.location.href = '/Auth/Login';
+                return;
+                }
+
+                const resData = await response.json();
+                if (resData && resData.success) {
+                const options = resData.data || {};
+                semuaPerangkat = Array.isArray(options.perangkatList) ? options.perangkatList : [];
+                const kategoriList = Array.isArray(options.kategoriList) ? options.kategoriList : [];
+
+                // Render Dropdown Kategori
+                const kategoriListContainer = document.getElementById('kategoriDropdownList');
+                let kategoriHtml = `<div class="dropdown-item-custom fw-semibold" onclick="selectKategori('', ' Semua Kategori ')"> Semua Kategori </div>`;
+                kategoriList.forEach(kat => {
+                const encoded = encodeURIComponent(String(kat)).replace(/'/g, '%27');
+                kategoriHtml += `<div class="dropdown-item-custom" onclick="selectKategori(decodeURIComponent('${encoded}'), decodeURIComponent('${encoded}'))">${window.escapeHtml(kat)}</div>`;
+                });
+                kategoriListContainer.innerHTML = kategoriHtml;
+                }
+                } catch (error) {
+                console.error('Gagal memuat opsi form:', error);
+                }
+                }
+
+                // Kategori Logic
+                function toggleKategoriDropdown() {
+                const dropdown = document.getElementById('kategoriDropdownList');
+                const box = document.getElementById('kategoriSelectBox');
+                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+                box.classList.toggle('active');
+                document.getElementById('resultsDropdown').style.display = 'none';
+                }
+
+                function selectKategori(value, text) {
+                document.getElementById('kategoriSelectedText').innerText = text;
+                document.getElementById('filterKategoriValue').value = value;
+                document.getElementById('kategoriDropdownList').style.display = 'none';
+                document.getElementById('kategoriSelectBox').classList.remove('active');
+                clearSearch();
+                }
+
+                function clearSearch() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('hiddenPerangkatId').value = '';
+                document.getElementById('resultsDropdown').style.display = 'none';
+                }
+
+                function performSearch() {
+                const query = document.getElementById('searchInput').value.toLowerCase().trim();
+                const kategori = document.getElementById('filterKategoriValue').value;
+                const dropdown = document.getElementById('resultsDropdown');
+
+                dropdown.innerHTML = '';
+                document.getElementById('kategoriDropdownList').style.display = 'none';
+
+                if (query.length < 1) { dropdown.style.display = 'none'; return; }
+
+                const filtered = semuaPerangkat.filter(p => {
+                const matchKategori = (kategori === "" || p.kategori === kategori || p.Kategori === kategori);
+                const nama = p.nama || p.Nama || '';
+                const sn = p.snLaptop || p.SnLaptop || '';
+                const matchNama = nama.toLowerCase().includes(query);
+                const matchSn = sn.toLowerCase().includes(query);
+                return matchKategori && (matchNama || matchSn);
+                });
+
+                if (filtered.length > 0) {
+                filtered.forEach(p => {
+                const id = p.id || p.Id;
+                const nama = p.nama || p.Nama;
+                const sn = p.snLaptop || p.SnLaptop;
+                const jumlah = p.jumlah !== undefined ? p.jumlah : (p.Jumlah !== undefined ? p.Jumlah : 0);
+
+                const item = document.createElement('div');
+                item.className = 'dropdown-item-custom';
+                item.innerHTML = window.escapeHtml(nama) + (sn ? ` <span class="text-muted small">(SN: ${window.escapeHtml(sn)})</span>` : '') + ` <span class="text-success small fw-semibold">(Stok: ${Number(jumlah || 0)})</span>`;
+                item.onclick = () => {
+                document.getElementById('searchInput').value = nama;
+                document.getElementById('hiddenPerangkatId').value = id;
+                dropdown.style.display = 'none';
+                };
+                dropdown.appendChild(item);
+                });
+                dropdown.style.display = 'block';
+                } else {
+                dropdown.innerHTML = '<div class="dropdown-item-custom text-muted text-center py-2">Perangkat tidak ditemukan</div>';
+                dropdown.style.display = 'block';
+                }
+                }
+
+                document.addEventListener('click', function (e) {
+                if (!e.target.closest('.custom-dropdown-container') && !e.target.closest('.position-relative')) {
+                document.getElementById('kategoriDropdownList').style.display = 'none';
+                document.getElementById('resultsDropdown').style.display = 'none';
+                document.getElementById('kategoriSelectBox')?.classList.remove('active');
+                }
+                });
+            </script>
+        }

@@ -1,0 +1,112 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Tambah Kategori - SIGMA";
+}
+
+@section Styles {
+    <style>
+        .bg-pertamina-red {
+            background-color: #ED1B24 !important;
+        }
+
+        .text-pertamina-red {
+            color: #ED1B24 !important;
+        }
+
+        .btn-pertamina-red {
+            background-color: #ED1B24 !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        .btn-pertamina-red:hover {
+            background-color: #d0121a !important;
+            color: white !important;
+        }
+    </style>
+}
+
+<div class="container py-5 animate-fade-in">
+    <div class="card border-0 shadow-sm rounded-4 p-4 mx-auto bg-white" style="max-width: 500px;">
+        <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-tag me-2"></i>Tambah Kategori Baru</h4>
+
+        <form id="formCreateKategori">
+            <div class="mb-4">
+                <label class="form-label fw-semibold small text-muted">Nama Kategori <span
+                    class="text-danger">*</span></label>
+                    <input type="text" id="inputNamaKategori" name="NamaKategori"
+                           class="form-control rounded-pill py-2 px-3 bg-light border shadow-sm" required
+                           placeholder="Contoh: Perangkat Jaringan" />
+                    <span id="errorNamaKategori" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="/KelolaBarang/Kategori"
+                       class="btn btn-light rounded-pill px-4 fw-semibold border shadow-sm">Batal</a>
+                    <button type="submit" class="btn btn-pertamina-red rounded-pill px-4 fw-semibold shadow-sm">
+                        Simpan Kategori
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            window.API_BASE_URL = '@apiBaseUrl';
+
+            document.getElementById('formCreateKategori').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const namaKategori = document.getElementById('inputNamaKategori').value.trim();
+                if (!namaKategori) {
+                    document.getElementById('errorNamaKategori').textContent = 'Nama Kategori wajib diisi.';
+                    return;
+                } else {
+                    document.getElementById('errorNamaKategori').textContent = '';
+                }
+
+                const payload = {
+                    NamaKategori: namaKategori
+                };
+
+                try {
+                    // DIPERBAIKI: Menambahkan 'kelolabarang' ke dalam URL endpoint API
+                    const response = await fetch(`${window.API_BASE_URL}/api/kelolabarang/kategori`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload),
+                        credentials: 'include'
+                    });
+
+                    if (response.status === 401) {
+                        window.location.href = '/Auth/Login';
+                        return;
+                    }
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        await window.refreshSigmaNotifications?.();
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: result.message || 'Kategori baru berhasil ditambahkan.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = '/KelolaBarang/Kategori'; 
+                        });
+                    } else {
+                        Swal.fire('Gagal!', result.message || 'Terjadi kesalahan saat menyimpan kategori.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+                }
+            });
+        </script>
+    }

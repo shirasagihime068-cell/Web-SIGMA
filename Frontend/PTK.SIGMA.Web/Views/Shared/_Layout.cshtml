@@ -1,0 +1,210 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    Layout = null;
+    var apiBaseUrl = "";
+    var backendBaseUrl = Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5052";
+    var rawTitle = ViewData["Title"]?.ToString() ?? "Dashboard";
+    var pageTitle = rawTitle.Replace(" - SIGMA", "", StringComparison.OrdinalIgnoreCase);
+    var routeController = ViewContext.RouteData.Values["controller"]?.ToString()?.ToLowerInvariant() ?? "app";
+    var routeAction = ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant() ?? "index";
+}
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#063b79" />
+    <title>@rawTitle - PTK.SIGMA</title>
+
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/fonts/inter/inter-300-700.css" />
+    <link rel="stylesheet" href="~/css/bootstrap-icons-fix.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+
+    <!-- CSS CUSTOM UNTUK MERAPIKAN PROFIL & HEADER -->
+    <style>
+            /* Logo Topbar Statis */
+            .topbar-logo-link:hover,
+            .topbar-logo-link:focus,
+            .topbar-logo-link:active,
+            .topbar-logo:hover {
+                transform: none !important;
+                animation: none !important;
+                box-shadow: none !important;
+            }
+
+            /* 
+             * PROFIL USER MINIMALIS & ELEGAN (Tanpa Kotak)
+             */
+            .sidebar-user-profile {
+                padding: 10px 20px 25px;
+                margin-bottom: 15px;
+                text-align: center;
+                position: relative;
+            }
+
+            /* Garis bawah gradien halus sebagai pemisah, bukan kotak */
+            .sidebar-user-profile::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 15%;
+                width: 70%;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            }
+
+            /* Role Akses (Di Atas, Besar, Menonjol) */
+            .sidebar-role-text {
+                color: #ffffff;
+                font-size: 1.35rem;
+                font-weight: 800;
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                display: block;
+            }
+
+            /* Nama User (Di Bawah, Lebih Kecil, Rapi) */
+            .sidebar-name-text {
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.95rem;
+                font-weight: 400;
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 0 10px;
+            }
+
+            /* Area Tombol Close Sidebar (Hanya untuk Mobile) */
+            .sidebar-header-mobile {
+                display: flex;
+                justify-content: flex-end;
+                padding: 15px 15px 0 15px;
+            }
+    </style>
+</head>
+
+<body class="app-body page-@routeController page-@routeController-@routeAction" data-controller="@routeController"
+      data-action="@routeAction">
+      
+    <aside class="offcanvas offcanvas-start app-sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarTitle"
+           data-bs-scroll="true">
+           
+        <!-- Tombol Close (Hanya muncul di layar kecil/mobile) -->
+        <div class="sidebar-header-mobile d-lg-none">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                    aria-label="Tutup menu"></button>
+        </div>
+
+        <!-- Profil Pengguna Minimalis (Role di atas, Nama di bawah) -->
+        <div class="sidebar-user-profile">
+            <!-- ID "sidebarRole" dipertahankan agar script Anda tetap bisa mengisi datanya -->
+            <div id="sidebarRole" class="sidebar-role-text">Memuat akses...</div>
+            
+            <!-- ID "sidebarUsername" dipertahankan -->
+            <div id="sidebarUsername" class="sidebar-name-text" title="Memuat pengguna...">Memuat pengguna...</div>
+        </div>
+
+        <nav class="sidebar-navigation" aria-labelledby="sidebarTitle">
+            <div id="sidebarTitle" class="sidebar-section-label">Menu Utama</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="dashboard" href="/Home/Index"><i
+                    class="bi bi-grid-1x2-fill sidebar-icon"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="archive"
+                                            href="/Perangkat/Arsip"><i class="bi bi-archive-fill sidebar-icon"></i><span>Arsip
+                        Inventaris</span></a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="reports"
+                                                href="/Perangkat/CetakLaporan"><i
+                            class="bi bi-file-earmark-pdf-fill sidebar-icon"></i><span>Laporan &amp; PDF</span></a></li>
+
+                            <li class="sidebar-section-label sidebar-section-spacer">Operasional</li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="inventory"
+                                                    href="/KelolaBarang/Index"><i class="bi bi-box-seam-fill sidebar-icon"></i><span>Manajemen
+                                Inventaris</span></a></li>
+                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="loans"
+                                                        href="/Peminjaman/Index"><i class="bi bi-arrow-left-right sidebar-icon"></i><span>Sirkulasi
+                                    Peminjaman</span></a></li>
+                                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="stocktake"
+                                                            href="/Opname/Index"><i class="bi bi-clipboard2-check-fill sidebar-icon"></i><span class="nav-label">Stock
+                                        Opname</span><span id="opnameReminderBadge" class="opname-reminder-badge d-none" title="Stock opname bulan ini belum lengkap" aria-label="Stock opname bulan ini belum lengkap">!</span></a></li>
+
+                                        <li class="sidebar-section-label sidebar-section-spacer">Administrasi</li>
+                                        <li class="nav-item admin-only-menu"><a class="nav-link nav-link-custom" data-nav-key="users"
+                                                                                href="/User/Index"><i class="bi bi-people-fill sidebar-icon"></i><span>Manajemen
+                                            Pengguna</span></a></li>
+                                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="vendors" href="/Vendor/Index"><i
+                                                class="bi bi-buildings-fill sidebar-icon"></i><span>Manajemen Vendor</span></a></li>
+                                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="profile" href="/Profile/Index"><i
+                                                    class="bi bi-person-gear sidebar-icon"></i><span>Pengaturan Akun</span></a></li>
+                                                </ul>
+                                            </nav>
+
+                                            <div class="sidebar-footer">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span><strong>PTK SIGMA</strong><small>Inventory Management</small></span>
+                                            </div>
+                                        </aside>
+
+                                        <div class="app-shell">
+                                            <div class="sigma-header-scene">
+                                                <header class="sigma-navbar">
+            
+                                                    <!-- Tombol Hamburger -->
+                                                    <button class="sigma-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
+                                                            aria-controls="sidebarMenu" aria-label="Buka menu">
+                                                        <i class="bi bi-list"></i>
+                                                    </button>
+            
+                                                    <!-- Posisi Logo di Header -->
+                                                    <a href="/Home/Index" class="topbar-logo-link" aria-label="SIGMA Dashboard">
+                                                        <img src="~/assets/logo-white.png" alt="PT Pertamina Trans Kontinental" class="topbar-logo" />
+                                                    </a>
+
+                                                    <div class="topbar-actions">
+                                                        @await Html.PartialAsync("_Notification")
+                                                        <button type="button" id="logoutButton" class="sigma-logout" title="Keluar dari aplikasi">
+                                                            <i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline">Keluar</span>
+                                                        </button>
+                                                    </div>
+                                                </header>
+
+                                                <section class="sigma-hero" aria-label="Identitas halaman">
+                                                    <div class="sigma-hero-content">
+                                                        <span class="sigma-hero-kicker">Sistem Informasi Gudang &amp; Manajemen Aset</span>
+                                                        <h1>@pageTitle</h1>
+                                                        <nav aria-label="breadcrumb">
+                                                            <ol class="breadcrumb mb-0">
+                                                                <li class="breadcrumb-item"><a href="/Home/Index">SIGMA</a></li>
+                                                                <li class="breadcrumb-item active" aria-current="page">@pageTitle</li>
+                                                            </ol>
+                                                        </nav>
+                                                    </div>
+                                                </section>
+                                            </div>
+
+                                            <main class="app-content animate-fade-in">@RenderBody()</main>
+                                            <footer class="app-footer">
+                                                <span>&copy; @DateTime.Now.Year PT Pertamina Trans Kontinental</span>
+                                                <span>SIGMA · Sistem Gudang ICT</span>
+                                            </footer>
+                                        </div>
+
+                                        @await RenderSectionAsync("Modals", required: false)
+                                        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+                                        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                                        <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+                                        <script src="~/lib/signalr/8.0.0/signalr.min.js"></script>
+                                        <script>window.API_BASE_URL = '@apiBaseUrl'; window.BACKEND_BASE_URL = '@backendBaseUrl';</script>
+                                        <script src="~/js/api-client.js" asp-append-version="true"></script>
+                                        <script src="~/js/site.js" asp-append-version="true"></script>
+                                        @await RenderSectionAsync("Scripts", required: false)
+                                    </body>
+
+                                </html>

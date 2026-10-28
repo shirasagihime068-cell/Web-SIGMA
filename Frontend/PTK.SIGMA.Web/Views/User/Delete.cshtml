@@ -1,0 +1,265 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Hapus Pengguna - SIGMA";
+}
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    .bg-pertamina-red {
+        background-color: #ED1B24 !important;
+    }
+
+    .text-pertamina-red {
+        color: #ED1B24 !important;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+    }
+
+    .form-container {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 30px 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #f8d7da;
+        color: #ED1B24;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header-divider {
+        border-top: 1px solid #f0f0f0;
+        margin: 20px -35px 25px -35px;
+    }
+
+    .custom-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #333;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
+        display: block;
+    }
+
+    .custom-input {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        color: #212529;
+        font-weight: 500;
+        width: 100%;
+    }
+</style>
+
+<!-- KONTEN UTAMA -->
+<div class="container py-4 py-md-5 px-3 px-md-4 animate-fade-in">
+    <div class="form-container mx-auto" style="max-width: 750px;">
+
+        <div class="d-flex align-items-center mb-2">
+            <div class="header-icon me-3 shadow-sm flex-shrink-0">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Konfirmasi Hapus Pengguna</h5>
+                <p class="text-muted small m-0 mt-1">Apakah Anda yakin ingin menghapus pengguna ini secara permanen?</p>
+            </div>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-4">
+            <span class="spinner-border spinner-border-sm me-2"></span>Memuat data pengguna...
+        </div>
+
+        <!-- Konten Detail yang akan dihapus -->
+        <div id="deleteContent" class="d-none">
+            <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 py-3"
+                 style="background-color: #fff3cd; color: #856404; font-size: 0.9rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                    <span>Tindakan ini tidak dapat dibatalkan. Data pengguna yang dihapus akan hilang dari
+                        sistem.</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="custom-label">Nama Lengkap</label>
+                    <input type="text" id="viewNamaLengkap" class="custom-input" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="custom-label">Email</label>
+                    <input type="text" id="viewEmail" class="custom-input" readonly />
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="custom-label">Username</label>
+                        <input type="text" id="viewUsername" class="custom-input" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="custom-label">Role / Hak Akses</label>
+                        <input type="text" id="viewRole" class="custom-input" readonly />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a href="/User/Index"
+                       class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm text-dark"
+                       style="font-size: 0.85rem;">Batal</a>
+                    <button type="button" id="btnConfirmDelete"
+                            class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap"
+                            style="font-size: 0.85rem;">
+                        <i class="bi bi-trash-fill me-1"></i> Ya, Hapus Pengguna
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @section Scripts {
+        <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+        <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+        <script>
+            window.API_BASE_URL = '@apiBaseUrl';
+            let userIdToDelete = null;
+
+            document.addEventListener("DOMContentLoaded", function () {
+            // Ambil ID dari URL path (contoh: /User/Delete/5)
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            userIdToDelete = pathSegments[pathSegments.length - 1];
+
+            if (!userIdToDelete || isNaN(userIdToDelete)) {
+            Swal.fire('Error', 'ID Pengguna tidak valid.', 'error').then(() => {
+            window.location.href = '/User/Index';
+            });
+            return;
+            }
+
+            // Ambil detail data user untuk ditampilkan sebelum dihapus
+            loadUserDetail(userIdToDelete);
+
+            // Handle Tombol Konfirmasi Hapus
+            document.getElementById('btnConfirmDelete').addEventListener('click', async function () {
+            const confirmResult = await Swal.fire({
+            title: 'Yakin Ingin Menghapus?',
+            text: 'Data pengguna ini akan dihapus secara permanen.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ED1B24',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-4 shadow-lg' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+            const response = await fetch(`${window.API_BASE_URL}/api/user/${userIdToDelete}`, {
+            method: 'DELETE',
+            credentials: 'include'
+            });
+
+            const resJson = await response.json().catch(() => ({ success: response.ok }));
+
+            if (response.ok && (resJson.success !== false)) {
+            Swal.fire({
+            title: 'Terhapus!',
+            text: resJson.message || 'Pengguna berhasil dihapus.',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false,
+            customClass: { popup: 'rounded-4 shadow-lg' }
+            }).then(() => {
+            window.location.href = '/User/Index';
+            });
+            } else {
+            Swal.fire('Gagal!', resJson.message || 'Gagal menghapus pengguna.', 'error');
+            }
+            } catch (error) {
+            Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+            }
+            });
+            });
+
+            async function loadUserDetail(id) {
+            try {
+            const response = await fetch(`${window.API_BASE_URL}/api/user/${id}`, {
+            method: 'GET',
+            credentials: 'include'
+            });
+
+            if (response.status === 401) {
+            window.location.href = '/Auth/Login';
+            return;
+            }
+
+            if (!response.ok) {
+            Swal.fire('Gagal', 'Data pengguna tidak ditemukan.', 'error').then(() => {
+            window.location.href = '/User/Index';
+            });
+            return;
+            }
+
+            const resJson = await response.json();
+            const item = resJson.data || resJson;
+
+            // Tampilkan data ke form readonly
+            document.getElementById('viewNamaLengkap').value = item.namaLengkap || item.NamaLengkap || '-';
+            document.getElementById('viewEmail').value = item.email || item.Email || '-';
+            document.getElementById('viewUsername').value = item.username || item.Username || '-';
+            document.getElementById('viewRole').value = item.role || item.Role || '-';
+
+            // Sembunyikan loading, tampilkan konten form
+            document.getElementById('loadingState').classList.add('d-none');
+            document.getElementById('deleteContent').classList.remove('d-none');
+
+            } catch (error) {
+            console.error('Gagal mengambil data pengguna:', error);
+            Swal.fire('Error', 'Gagal memuat data dari server backend.', 'error').then(() => {
+            window.location.href = '/User/Index';
+            });
+            }
+            }
+        </script>
+    }

@@ -1,0 +1,547 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    Layout = null;
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Pratinjau Cetak Laporan - SIGMA";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/lib/fonts/inter/inter-300-700.css" />
+
+    <style>
+            body {
+                font-family: Inter, 'Segoe UI', Arial, sans-serif;
+                background-color: #e9eff5;
+                color: #000;
+                font-size: 11px;
+                margin: 0;
+                padding: 0;
+            }
+
+            .viewer-topbar {
+                min-height: 66px;
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                color: #fff;
+                background: linear-gradient(135deg, #052f66, #0753a6);
+                box-shadow: 0 6px 22px rgba(5, 47, 102, .22);
+            }
+
+            .viewer-brand { display: flex; align-items: center; gap: 13px; }
+            .viewer-brand img { width: 104px; height: 36px; object-fit: contain; }
+            .viewer-brand span { padding-left: 13px; border-left: 1px solid rgba(255,255,255,.25); }
+            .viewer-brand strong, .viewer-brand small { display: block; }
+            .viewer-brand strong { font-size: 13px; }
+            .viewer-brand small { margin-top: 3px; color: rgba(255,255,255,.68); font-size: 9px; }
+            .viewer-actions { display: flex; gap: 8px; }
+            .viewer-actions .btn { border-radius: 9px !important; font-size: 11px; font-weight: 700; }
+
+            .viewer-shell { min-height: calc(100vh - 66px); display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+            .report-panel { padding: 22px 18px; background: #fff; border-right: 1px solid #d6e1eb; }
+            .report-panel h2 { margin: 0 0 5px; color: #15263c; font-size: 16px; font-weight: 800; }
+            .report-panel > p { margin: 0 0 20px; color: #718096; font-size: 10px; line-height: 1.6; }
+            .report-meta { margin: 0 0 22px; display: grid; gap: 10px; }
+            .report-meta div { padding: 10px 11px; border: 1px solid #dfE8f1; border-radius: 10px; background: #f8fbfe; }
+            .report-meta dt { margin: 0 0 4px; color: #74859a; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+            .report-meta dd { margin: 0; color: #20364e; font-size: 10px; font-weight: 700; }
+            .thumbnail-title { margin-bottom: 9px; color: #53677e; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+            .thumbnail-list { max-height: calc(100vh - 392px); display: grid; gap: 8px; overflow-y: auto; }
+            .thumbnail-button { width: 100%; padding: 8px 10px; display: flex; align-items: center; gap: 10px; color: #334a63; text-align: left; border: 1px solid #dbe6ef; border-radius: 10px; background: #fff; font-size: 9px; }
+            .thumbnail-button:hover { color: #0753a6; border-color: #8bb9e4; background: #f0f7ff; }
+            .thumbnail-number { width: 25px; height: 31px; display: grid; place-items: center; color: #fff; border-radius: 5px; background: #0753a6; font-weight: 800; }
+
+            .report-stage { min-width: 0; background: #cfd8e2; }
+            .viewer-toolbar { min-height: 48px; padding: 7px 17px; display: flex; align-items: center; justify-content: space-between; color: #e8eef5; background: #263443; }
+            .viewer-toolbar strong { font-size: 10px; }
+            .zoom-controls { display: flex; align-items: center; gap: 5px; }
+            .zoom-controls button { width: 30px; height: 30px; color: #fff; border: 1px solid rgba(255,255,255,.18); border-radius: 7px; background: rgba(255,255,255,.07); }
+            #zoomLabel { min-width: 42px; text-align: center; font-size: 9px; }
+
+            /* Kontainer Pembungkus untuk Responsif Mobile (Horizontal Scroll) */
+            .print-preview-scroll {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                height: calc(100vh - 114px);
+                padding: 22px 0 60px;
+                overflow: auto;
+            }
+
+            /* Memastikan tabel memiliki border luar dan dalam yang tegas menutup */
+            .table-laporan {
+                border-collapse: collapse !important;
+                width: 100%;
+                border: 1px solid #000 !important;
+            }
+
+            .table-laporan th {
+                background-color: #e2e8f0 !important;
+                color: #000000 !important;
+                text-align: center;
+                vertical-align: middle;
+                font-size: 11px;
+                font-weight: bold !important;
+                border: 1px solid #000 !important;
+                padding: 4px 4px;
+            }
+
+            .table-laporan td {
+                vertical-align: middle;
+                border: 1px solid #000 !important;
+                color: #000000 !important;
+                font-weight: bold !important;
+                padding: 3px 4px;
+                font-size: 11px;
+            }
+
+            .editable-text {
+                border: 1px dashed transparent;
+                border-radius: 4px;
+                padding: 2px 6px;
+                outline: none;
+                display: inline-block;
+                transition: all 0.2s;
+            }
+
+            .editable-text:hover,
+            .editable-text:focus {
+                border-color: #0d6efd;
+                background-color: rgba(13, 110, 253, 0.05);
+                cursor: text;
+            }
+
+            /* Disesuaikan untuk lebar standar A4 Portrait (~794px) */
+            .print-container {
+                background: #fff;
+                width: 794px;
+                min-width: 794px;
+                margin: 0 auto;
+                box-shadow: 0 10px 34px rgba(24, 43, 65, .22);
+                transform-origin: top center;
+            }
+
+            .page-slide {
+                padding: 15px 20px;
+            }
+
+            .cover-page {
+                height: 100vh;
+                min-height: 600px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+
+            .signature-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                page-break-inside: avoid;
+                border: 1px solid #000;
+            }
+
+            .signature-table td {
+                border: 1px solid #000;
+                padding: 5px;
+                text-align: center;
+                vertical-align: top;
+                font-size: 11px;
+            }
+
+            @@media print {
+                @@page {
+                    margin: 0.6cm;
+                    size: A4 portrait;
+                }
+
+                .no-print {
+                    display: none !important;
+                }
+
+                body {
+                    background-color: #fff !important;
+                }
+
+                .print-preview-scroll {
+                    overflow: visible !important;
+                    display: block !important;
+                    padding: 0 !important;
+                }
+
+                .print-container {
+                    box-shadow: none !important;
+                    margin: 0 !important;
+                    width: 100% !important;
+                    min-width: 100% !important;
+                }
+
+                .page-slide,
+                .cover-page {
+                    page-break-after: always;
+                    padding: 0 !important;
+                }
+
+                .page-slide:last-child {
+                    page-break-after: avoid;
+                }
+
+                .editable-text {
+                    border: none !important;
+                    background-color: transparent !important;
+                    padding: 0 !important;
+                }
+            }
+
+            @@media (max-width: 900px) {
+                .viewer-shell { grid-template-columns: 1fr; }
+                .report-panel { display: none; }
+                .viewer-brand small { display: none; }
+                .viewer-topbar { padding: 0 12px; }
+            }
+    </style>
+</head>
+
+<body>
+
+    <header class="viewer-topbar no-print">
+        <div class="viewer-brand">
+            <img src="/assets/logo-white.png" alt="Pertamina Trans Kontinental" />
+            <span><strong>Pratinjau Laporan Inventaris</strong><small>SIGMA · Sistem Gudang ICT</small></span>
+        </div>
+        <div class="viewer-actions">
+            <a href="/Home/Index" class="btn btn-outline-light btn-sm text-decoration-none"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <button id="printButton" type="button" onclick="window.print()" class="btn btn-primary btn-sm border-0" disabled><i class="bi bi-printer"></i> Cetak / Simpan PDF</button>
+        </div>
+    </header>
+
+    <div class="viewer-shell">
+        <aside class="report-panel no-print">
+            <h2>Laporan Inventaris</h2>
+            <p>Pratinjau dokumen siap cetak. Teks periode dan kolom tanda tangan dapat disesuaikan langsung pada halaman.</p>
+            <dl class="report-meta">
+                <div><dt>Status</dt><dd id="reportStatus">Memuat data...</dd></div>
+                <div><dt>Total Perangkat</dt><dd id="reportItemCount">—</dd></div>
+                <div><dt>Total Kategori</dt><dd id="reportCategoryCount">—</dd></div>
+                <div><dt>Dibuat</dt><dd id="reportGeneratedAt">—</dd></div>
+            </dl>
+            <div class="thumbnail-title">Navigasi Halaman</div>
+            <div id="thumbnailList" class="thumbnail-list"><span class="text-muted">Menyiapkan halaman...</span></div>
+        </aside>
+
+        <section class="report-stage">
+            <div class="viewer-toolbar no-print">
+                <strong><i class="bi bi-file-earmark-pdf me-2"></i>Dokumen A4 · Portrait</strong>
+                <div class="zoom-controls">
+                    <button type="button" onclick="changeZoom(-10)" aria-label="Perkecil">−</button>
+                    <span id="zoomLabel">100%</span>
+                    <button type="button" onclick="changeZoom(10)" aria-label="Perbesar">+</button>
+                </div>
+            </div>
+            <div class="print-preview-scroll" id="previewScroll">
+                <div class="print-container" id="printContainerContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-secondary" role="status"></div>
+                        <p class="mt-2 text-muted">Memuat data laporan...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SCRIPT JAVASCRIPT PURE FRONTEND -->
+    <script>
+            window.API_BASE_URL = '@apiBaseUrl';
+            let currentZoom = 100;
+
+            function escapeHtml(value) {
+                return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                })[character]);
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                loadCetakLaporanData();
+            });
+
+            async function loadCetakLaporanData() {
+                const container = document.getElementById('printContainerContent');
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/perangkat/cetak-laporan`, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'include',
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API mengembalikan HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success && result.data) {
+                        renderLaporan(result.data);
+                    } else {
+                        container.innerHTML = `<div class="text-center py-5 text-danger">Gagal memuat data laporan dari server.</div>`;
+                        document.getElementById('reportStatus').textContent = 'Gagal memuat data';
+                    }
+                } catch (error) {
+                    console.error('Error fetching cetak laporan:', error);
+                    container.innerHTML = `<div class="text-center py-5 text-danger">Data laporan gagal dimuat. Silakan kembali dan coba lagi.</div>`;
+                    document.getElementById('reportStatus').textContent = 'Gagal memuat data';
+                    document.getElementById('printButton').disabled = true;
+                }
+            }
+
+            function renderLaporan(items) {
+                const container = document.getElementById('printContainerContent');
+
+                if (!items || items.length === 0) {
+                    container.innerHTML = `<div class="text-center py-5 text-muted">Tidak ada data perangkat untuk dicetak.</div>`;
+                    document.getElementById('reportStatus').textContent = 'Tidak ada data';
+                    return;
+                }
+
+                // 1. Kelompokkan data berdasarkan Kategori secara otomatis
+                const grouped = Object.create(null);
+                items.forEach(item => {
+                    let kat = (!item.kategori || item.kategori.trim() === "") ? "Perangkat ICT Operation" : item.kategori;
+                    if (!grouped[kat]) {
+                        grouped[kat] = [];
+                    }
+                    grouped[kat].push(item);
+                });
+
+                const kategoriKeys = Object.keys(grouped);
+                const totalKategori = kategoriKeys.length;
+                let currentKategori = 0;
+
+                let htmlContent = '';
+
+                // 2. RENDER COVER PAGE
+                htmlContent += `
+                            <div class="cover-page">
+                                <img src="/assets/logo-print.png" alt="Logo Pertamina" style="width: 260px; margin-bottom: 30px;" onerror="this.style.display='none'">
+                                <h1 class="fw-bolder" style="color: #000000; font-size: 22px; letter-spacing: 1px; line-height: 1.3;">
+                                    LAPORAN BULANAN<br>
+                                </h1>
+                                <div style="margin: 30px 0;">
+                                    <h4 class="fw-bold m-0" style="font-size: 14px;">PERIODE :</h4>
+                                    <h4 class="fw-bold editable-text sync-periode" contenteditable="true" spellcheck="false" style="font-size: 14px;">Juli WEEK 2 2026</h4>
+                                </div>
+                            </div>
+                        `;
+
+                // 3. RENDER HALAMAN PER KATEGORI (LOOPING)
+                kategoriKeys.forEach(kategoriKey => {
+                    currentKategori++;
+                    const groupItems = grouped[kategoriKey];
+
+                    htmlContent += `
+                                <div class="page-slide w-100">
+                                    <!-- HEADER LAPORAN PER HALAMAN -->
+                                    <div class="d-flex justify-content-between align-items-start border-bottom border-dark border-2 pb-2 mb-2">
+                                        <div class="text-start">
+                                            <img src="/assets/logo-print.png" alt="Logo" height="26" class="mb-1" onerror="this.style.display='none'">
+                                            <h6 class="fw-bold m-0" style="font-size: 12px;">LAPORAN BULANAN </h6>
+                                            <h6 class="fw-bold m-0" style="font-size: 11px;">FUNGSI INFORMATION & COMMUNICATION TECHNOLOGY</h6>
+                                        </div>
+                                        <div class="text-end text-nowrap">
+                                            <div class="fw-bold mt-1" style="font-size: 11px;">
+                                                PERIODE<span class="ms-2 me-1">:</span>
+                                                <span class="editable-text sync-periode" contenteditable="true" spellcheck="false">Juli WEEK 2 2026</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- JUDUL KATEGORI -->
+                                    <div class="fw-bold mb-2" style="font-size: 11px; background-color: #e2e8f0; color: #000; padding: 4px 6px; border: 1px solid #000;">
+                                        LAPORAN  - ${escapeHtml(kategoriKey.toUpperCase())}
+                                    </div>
+
+                                    <!-- TABEL DATA -->
+                                    <table class="table table-laporan mt-1 mb-3">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%">No.</th>
+                                                <th width="9%">Foto</th>
+                                                <th width="22%">Nama Perangkat</th>
+                                                <th width="14%">Vendor</th>
+                                                <th width="15%">Lokasi Barang</th>
+                                                <th width="15%">Keterangan</th>
+                                                <th width="6%">Jumlah</th>
+                                                <th width="7%">Status</th>
+                                                <th width="7%">Kondisi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                        `;
+
+                    groupItems.forEach((item, index) => {
+                        let fotoHtml = `<span class="text-muted">-</span>`;
+
+                        if (item.dokumentasi) {
+                            if (/^https?:\/\//i.test(item.dokumentasi) || item.dokumentasi.startsWith('/api/files/')) {
+                                fotoHtml = `<img src="${escapeHtml(item.dokumentasi)}" alt="Foto" style="width: 32px; height: 32px; object-fit: cover;" class="rounded border" onerror="this.style.display='none'" />`;
+                            } else {
+                            let fileName = item.dokumentasi
+                                .replace(/^foto-perangkat[\/\\]/, '')
+                                .replace(/^opname[\/\\]/, '')
+                                .replace(/^uploads[\/\\]/, '')
+                                .replace(/^images[\/\\]/, '')
+                                .replace(/^~\/?/, '');
+
+                            let encodedFileName = encodeURIComponent(fileName);
+                            let minioImageUrl = `${window.API_BASE_URL}/api/files/perangkat?fileName=${encodedFileName}`;
+
+                            fotoHtml = `<img src="${escapeHtml(minioImageUrl)}" alt="Foto" style="width: 32px; height: 32px; object-fit: cover;" class="rounded border" onerror="this.style.display='none'" />`;
+                            }
+                        }
+
+                        const namaVendor = escapeHtml((item.vendor && item.vendor.namaVendor) ? item.vendor.namaVendor : (item.namaVendor || "-"));
+                        const lokasiBarang = escapeHtml(item.lokasiBarang || item.namaLokasi || "-");
+                        const keterangan = escapeHtml(item.keterangan || "-");
+                        const statusSewa = escapeHtml(item.statusSewa || "Gudang");
+
+                        // Menangani kondisi barang dari berbagai variasi properti database/API
+                        const rawKondisi = item.kondisi || item.statusKondisi || item.kondisiBarang || item.Kondisi || "Baik";
+                        const isRusak = String(rawKondisi).toLowerCase().includes("rusak");
+                        const warnaKondisi = isRusak ? "color: red; font-weight: bold;" : "color: black;";
+                        const kondisi = `<span style="${warnaKondisi}">${escapeHtml(rawKondisi)}</span>`;
+
+                        htmlContent += `
+                                            <tr>
+                                                <td class="text-center">${index + 1}</td>
+                                                <td class="text-center">${fotoHtml}</td>
+                                                <td>${escapeHtml(item.nama || '-')}</td>
+                                                <td>${namaVendor}</td>
+                                                <td>${lokasiBarang}</td>
+                                                <td>${keterangan}</td>
+                                                <td class="text-center">${Number(item.jumlah ?? 0)}</td>
+                                                <td class="text-center">${statusSewa}</td>
+                                                <td class="text-center">${kondisi}</td>
+                                            </tr>
+                                        `;
+                    });
+
+                    htmlContent += `
+                                        </tbody>
+                                    </table>
+                        `;
+
+                    // 4. LEMBAR TANDA TANGAN (HANYA MUNCUL DI SLIDE TERAKHIR)
+                    if (currentKategori === totalKategori) {
+                        htmlContent += `
+                                    <table class="signature-table fw-bold">
+                                        <tr>
+                                            <td colspan="2" class="text-start border-end-0 pb-1">Mengetahui :</td>
+                                            <td width="30%" class="text-start border-start-0 pb-1">
+                                                Pemeriksa : <span class="editable-text" contenteditable="true" style="border:1px dashed #ccc; padding: 1px 4px;">[Jabatan]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td width="35%" style="border-bottom: none;">
+                                                <span class="editable-text" contenteditable="true">Sr. Analyst IT Operation & Maintenance</span>
+                                            </td>
+                                            <td width="35%" style="border-bottom: none;">
+                                                <span class="editable-text" contenteditable="true">Manager ICT</span>
+                                            </td>
+                                            <td width="30%" style="border-bottom: none;">
+                                                <span class="editable-text" contenteditable="true">[Jabatan Pemeriksa]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="height: 35px; border-top: none; border-bottom: none;"></td>
+                                            <td style="border-top: none; border-bottom: none;"></td>
+                                            <td style="border-top: none; border-bottom: none;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border-top: none; border-bottom: none;">
+                                                <span class="editable-text text-decoration-underline" contenteditable="true">Keanu Rizky</span>
+                                            </td>
+                                            <td style="border-top: none; border-bottom: none;">
+                                                <span class="editable-text text-decoration-underline" contenteditable="true">Reza Ilham</span>
+                                            </td>
+                                            <td style="border-top: none; border-bottom: none;">
+                                                <span class="editable-text text-decoration-underline" contenteditable="true">[Nama Pemeriksa]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-start" style="border-top: none; padding-top: 2px;">Tgl.: <span class="fw-normal editable-text" contenteditable="true"></span></td>
+                                            <td class="text-start" style="border-top: none; padding-top: 2px;">Tgl.: <span class="fw-normal editable-text" contenteditable="true"></span></td>
+                                            <td class="text-start" style="border-top: none; padding-top: 2px;"><span class="fw-normal editable-text" contenteditable="true"></span></td>
+                                        </tr>
+                                    </table>
+                                `;
+                    }
+
+                    htmlContent += `</div>`;
+                });
+
+                container.innerHTML = htmlContent;
+
+                document.getElementById('reportStatus').textContent = 'Siap dicetak';
+                document.getElementById('reportItemCount').textContent = `${items.length} perangkat`;
+                document.getElementById('reportCategoryCount').textContent = `${totalKategori} kategori`;
+                document.getElementById('reportGeneratedAt').textContent = new Intl.DateTimeFormat('id-ID', {
+                    dateStyle: 'medium', timeStyle: 'short'
+                }).format(new Date());
+                document.getElementById('printButton').disabled = false;
+                renderThumbnails(kategoriKeys);
+
+                inisialisasiSyncPeriode();
+            }
+
+            function renderThumbnails(categories) {
+                const list = document.getElementById('thumbnailList');
+                const labels = ['Sampul', ...categories];
+                list.innerHTML = labels.map((label, index) => `
+                    <button type="button" class="thumbnail-button" onclick="goToReportPage(${index})">
+                        <span class="thumbnail-number">${index + 1}</span>
+                        <span>${escapeHtml(label)}</span>
+                    </button>`).join('');
+            }
+
+            function goToReportPage(index) {
+                const pages = document.querySelectorAll('#printContainerContent .cover-page, #printContainerContent .page-slide');
+                pages[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            function changeZoom(delta) {
+                currentZoom = Math.max(60, Math.min(130, currentZoom + delta));
+                const container = document.getElementById('printContainerContent');
+                container.style.zoom = currentZoom / 100;
+                document.getElementById('zoomLabel').textContent = `${currentZoom}%`;
+            }
+
+            function inisialisasiSyncPeriode() {
+                const periodeElements = document.querySelectorAll(".sync-periode");
+                periodeElements.forEach(function (el) {
+                    el.addEventListener("input", function () {
+                        const textBaru = this.innerText;
+                        periodeElements.forEach(function (target) {
+                            if (target !== el) { target.innerText = textBaru; }
+                        });
+                    });
+                });
+            }
+    </script>
+</body>
+
+</html>

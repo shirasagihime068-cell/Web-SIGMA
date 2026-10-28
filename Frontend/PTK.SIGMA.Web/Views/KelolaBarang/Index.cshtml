@@ -1,0 +1,465 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Manajemen Inventaris - SIGMA";
+}
+
+@section Styles {
+    <style>
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
+    </style>
+}
+
+<!-- Pembungkus dibuat w-100 agar merentang mengikuti layout utama -->
+<div class="w-100 animate-fade-in inventory-management-page">
+
+    <!-- CARD ATAS: HEADER & KUMPULAN TOMBOL AKSI -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white inventory-overview-card">
+        <div class="card-body p-4 d-flex flex-wrap align-items-center justify-content-between gap-3 inventory-overview-body">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3"
+                     style="width: 50px; height: 50px; min-width: 50px;">
+                    <i class="bi bi-box-seam text-primary fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark m-0">Manajemen Inventaris</h5>
+                    <p class="text-muted small m-0 mt-1">Dashboard manajemen stok, inventaris, serta riwayat transaksi
+                        masuk & keluar.</p>
+                    </div>
+                </div>
+
+                <a href="/Home/Index" class="inventory-back-action">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Kembali</span>
+                </a>
+            </div>
+        </div>
+
+        <nav class="inventory-command-grid" aria-label="Aksi cepat manajemen inventaris">
+            <a href="/Perangkat/Create" class="inventory-command-card inventory-command-primary">
+                <span class="inventory-command-icon"><i class="bi bi-box-seam"></i></span>
+                <span class="inventory-command-copy">
+                    <strong>Tambah Barang</strong>
+                    <small>Input barang baru ke inventaris</small>
+                </span>
+                <span class="inventory-command-arrow"><i class="bi bi-chevron-right"></i></span>
+            </a>
+
+            <a href="/Perangkat/Validasi" id="btnValidasiAdmin"
+               class="inventory-command-card inventory-command-validation d-none validation-action-button">
+                <span class="inventory-command-icon"><i class="bi bi-check-lg"></i></span>
+                <span class="inventory-command-copy">
+                    <strong>Validasi Barang Baru</strong>
+                    <small>Periksa dan setujui barang baru</small>
+                </span>
+                <span class="inventory-command-arrow"><i class="bi bi-chevron-right"></i></span>
+                <span id="validationPendingBadge" class="validation-pending-badge d-none"
+                      aria-label="0 permintaan menunggu validasi">0</span>
+            </a>
+
+            <a href="/KelolaBarang/Kategori" class="inventory-command-card inventory-command-category">
+                <span class="inventory-command-icon"><i class="bi bi-tag"></i></span>
+                <span class="inventory-command-copy">
+                    <strong>Tambah Kategori</strong>
+                    <small>Kelola kategori inventaris</small>
+                </span>
+                <span class="inventory-command-arrow"><i class="bi bi-chevron-right"></i></span>
+            </a>
+
+            <a href="/KelolaBarang/Rak" class="inventory-command-card inventory-command-rack">
+                <span class="inventory-command-icon"><i class="bi bi-hdd-rack"></i></span>
+                <span class="inventory-command-copy">
+                    <strong>Tambah Rak</strong>
+                    <small>Atur lokasi penyimpanan</small>
+                </span>
+                <span class="inventory-command-arrow"><i class="bi bi-chevron-right"></i></span>
+            </a>
+
+            <a href="/KelolaBarang/Lokasi" class="inventory-command-card inventory-command-location">
+                <span class="inventory-command-icon"><i class="bi bi-geo-alt"></i></span>
+                <span class="inventory-command-copy">
+                    <strong>Tambah Lokasi</strong>
+                    <small>Tambah area gudang</small>
+                </span>
+                <span class="inventory-command-arrow"><i class="bi bi-chevron-right"></i></span>
+            </a>
+        </nav>
+
+        <!-- KARTU PINTAS AKSI (SHORTCUT TAMBAHAN) -->
+        <div class="row g-3 mb-4 inventory-flow-grid">
+            <div class="col-12 col-md-6">
+                <div
+                    class="card border-0 shadow-sm rounded-4 bg-white p-3 d-flex flex-row align-items-center justify-content-between inventory-flow-card inventory-flow-in">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success bg-opacity-10 text-success rounded-3 d-flex align-items-center justify-content-center"
+                             style="width: 50px; height: 50px;">
+                            <i class="bi bi-box-arrow-in-down fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold text-dark m-0">Catat Barang Masuk</h6>
+                            <small class="text-muted">Tambah stok dari vendor/supplier</small>
+                        </div>
+                    </div>
+                    <!-- Mengarah ke Pages/KelolaBarang/Masuk -->
+                    <a href="/KelolaBarang/Masuk"
+                       class="btn btn-primary btn-sm rounded-pill px-3 text-white fw-semibold">Catat</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div
+                    class="card border-0 shadow-sm rounded-4 bg-white p-3 d-flex flex-row align-items-center justify-content-between inventory-flow-card inventory-flow-out">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-3 d-flex align-items-center justify-content-center"
+                             style="width: 50px; height: 50px;">
+                            <i class="bi bi-box-arrow-up fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold text-dark m-0">Catat Barang Keluar</h6>
+                            <small class="text-muted">Kurangi stok untuk operasional</small>
+                        </div>
+                    </div>
+                    <!-- Mengarah ke Pages/KelolaBarang/Keluar -->
+                    <a href="/KelolaBarang/Keluar" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold text-white">Catat</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER & DOWNLOAD PDF / EXCEL BAR -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white inventory-report-panel">
+            <div class="card-body p-4 sigma-filter-panel inventory-report-filter">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-auto report-filter-heading">
+                        <span class="fw-bold small"><i class="bi bi-filter me-1"></i> Cetak Laporan
+                            Transaksi:</span>
+                        </div>
+                        <div class="col-12 col-md-3 report-date-filter">
+                            <label class="form-label" for="inputStart">Dari Tanggal</label>
+                            <input type="date" id="inputStart" class="form-control fw-semibold" required />
+                        </div>
+                        <div class="col-12 col-md-3 report-date-filter">
+                            <label class="form-label" for="inputEnd">Sampai Tanggal</label>
+                            <input type="date" id="inputEnd" class="form-control fw-semibold" required />
+                        </div>
+                        <div class="col-12 col-md-auto d-flex gap-2 report-filter-actions">
+                            <button type="button" onclick="downloadLaporan('pdf')"
+                                    class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-sm">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                            </button>
+                            <button type="button" onclick="downloadLaporan('excel')"
+                                    class="btn btn-success btn-sm rounded-pill px-3 fw-semibold shadow-sm text-white">
+                                <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL RIWAYAT GABUNGAN (CHRONOLOGICAL HISTORY) -->
+            <div class="card border-0 shadow-sm rounded-4 bg-white mb-5 inventory-history-card">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="fw-bold text-dark m-0 text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                            <i class="bi bi-clock-history me-2 text-primary"></i> Riwayat Seluruh Transaksi Stok
+                        </h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 inventory-history-table" style="font-size: 0.85rem;">
+                            <thead class="table-light text-uppercase small text-nowrap">
+                                <tr>
+                                    <th class="py-3 ps-4">Waktu</th>
+                                    <th class="py-3 text-center">Foto</th>
+                                    <th class="py-3">Nama Barang</th>
+                                    <th class="py-3 text-center">Jenis</th>
+                                    <th class="py-3 text-center">Jumlah</th>
+                                    <th class="py-3">Vendor</th>
+                                    <th class="py-3">Penerima</th>
+                                    <th class="py-3 pe-4">Keterangan</th>
+                                    <th class="py-3 text-center pe-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="riwayatTableBody">
+                                <tr>
+                                    <td colspan="9" class="text-center py-4 text-muted">Memuat data riwayat...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="inventory-history-footer">
+                        <span id="inventoryHistorySummary">Memuat riwayat...</span>
+                        <nav id="inventoryHistoryPagination" aria-label="Navigasi riwayat transaksi"></nav>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        @section Scripts {
+            <script>
+                window.API_BASE_URL = '@apiBaseUrl';
+                let isUserAdmin = false;
+                let transactionItems = [];
+                let transactionPage = 1;
+                const transactionPageSize = 8;
+
+                document.addEventListener("DOMContentLoaded", async function () {
+                    const today = new Date();
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+                    document.getElementById('inputStart').valueAsDate = thirtyDaysAgo;
+                    document.getElementById('inputEnd').valueAsDate = today;
+
+                    await checkUserRole();
+                    loadRiwayatTransaksi();
+                });
+
+                async function checkUserRole() {
+                    try {
+                        const res = await fetch(`${window.API_BASE_URL}/api/home/user-info`, { credentials: 'include' });
+                        const data = await res.json();
+                        if (data.success && data.role && data.role.toLowerCase() === 'admin') {
+                            isUserAdmin = true;
+                            document.getElementById('btnValidasiAdmin').classList.remove('d-none');
+                            await loadPendingValidationCount();
+                        }
+                    } catch (e) {
+                        console.error("Gagal mengambil info user", e);
+                    }
+                }
+
+                async function loadPendingValidationCount() {
+                    const badge = document.getElementById('validationPendingBadge');
+                    try {
+                        const response = await fetch(`${window.API_BASE_URL}/api/perangkat/validasi`, { credentials: 'include' });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const result = await response.json();
+                        const count = Array.isArray(result?.data) ? result.data.length : 0;
+                        badge.textContent = count > 99 ? '99+' : String(count);
+                        badge.setAttribute('aria-label', `${count} permintaan menunggu validasi`);
+                        badge.classList.toggle('d-none', count === 0);
+                    } catch (error) {
+                        badge.classList.add('d-none');
+                        console.warn('Jumlah validasi belum dapat dimuat:', error.message);
+                    }
+                }
+
+                async function loadRiwayatTransaksi() {
+                    const tbody = document.getElementById('riwayatTableBody');
+
+                    try {
+                        const res = await fetch(`${window.API_BASE_URL}/api/kelolabarang`, { credentials: 'include' });
+                        const json = await res.json();
+
+                        tbody.innerHTML = '';
+
+                        if (json.success && json.data && json.data.length > 0) {
+                            transactionItems = json.data;
+                            transactionPage = 1;
+                            renderTransactionPage();
+                        } else {
+                            transactionItems = [];
+                            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">Belum ada riwayat aktivitas transaksi stok.</td></tr>`;
+                            renderTransactionPagination(0);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        transactionItems = [];
+                        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-danger">Gagal memuat data. Periksa koneksi ke server.</td></tr>`;
+                        renderTransactionPagination(0);
+                    }
+                }
+
+                function renderTransactionPage() {
+                    const tbody = document.getElementById('riwayatTableBody');
+                    const totalPages = Math.max(1, Math.ceil(transactionItems.length / transactionPageSize));
+                    transactionPage = Math.min(Math.max(1, transactionPage), totalPages);
+                    const startIndex = (transactionPage - 1) * transactionPageSize;
+                    const pageItems = transactionItems.slice(startIndex, startIndex + transactionPageSize);
+                    tbody.innerHTML = '';
+
+                    pageItems.forEach(item => {
+                                const itemId = Number(item.id || 0);
+                                const itemType = String(item.jenis || '');
+                                const encodedItemType = encodeURIComponent(itemType).replace(/'/g, '%27');
+                                const itemName = window.escapeHtml(item.namaBarang || '-');
+                                const itemVendor = window.escapeHtml(item.vendor || '-');
+                                const itemRecipient = window.escapeHtml(item.penerima || '-');
+                                const itemNote = window.escapeHtml(item.keterangan || '-');
+                                const itemQuantity = Number(item.jumlah || 0);
+                                const tglFormat = new Date(item.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                                const isMasuk = itemType.toLowerCase() === 'masuk';
+                                const badgeJenis = isMasuk ? `<span class="badge bg-success bg-opacity-10 text-success px-2 py-1">Masuk</span>` : `<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">Keluar</span>`;
+                                const qtyColor = isMasuk ? `<span class="text-success">+${itemQuantity}</span>` : `<span class="text-danger">-${itemQuantity}</span>`;
+                                const penerimaHtml = isMasuk ? `<span class="text-muted small">-</span>` : `<span class="fw-semibold text-dark">${itemRecipient}</span>`;
+                                const fotoPath = resolveTransactionImage(item.dokumentasi);
+                                const fotoHtml = fotoPath
+                                    ? `<div class="transaction-photo"><img src="${window.escapeHtml(fotoPath)}" alt="Foto ${itemName}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden><i class="bi bi-image"></i></span></div>`
+                                    : `<div class="transaction-photo"><span><i class="bi bi-image"></i></span></div>`;
+
+                                let statusHtml = '';
+                                const statusStr = item.status ? item.status.toString().toLowerCase() : '';
+
+                                if (statusStr === 'disetujui' || statusStr === '1') {
+                                    statusHtml = `<span class="badge bg-success bg-opacity-10 text-success px-2 py-1 fw-semibold"><i class="bi bi-check-all me-1"></i> Disetujui</span>`;
+                                } else if (statusStr === 'ditolak' || statusStr === '2') {
+                                    statusHtml = `<span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 fw-semibold"><i class="bi bi-x-circle me-1"></i> Ditolak</span>`;
+                                } else {
+                                    if (isUserAdmin) {
+                                        statusHtml = `
+                                                        <div class="d-flex justify-content-center gap-1">
+                                                            <button onclick="approveTransaksi(${itemId}, decodeURIComponent('${encodedItemType}'))" class="btn btn-success btn-sm px-2 py-1 shadow-sm text-white" title="Setujui"><i class="bi bi-check-lg"></i> Setujui</button>
+                                                            <button onclick="tolakTransaksi(${itemId}, decodeURIComponent('${encodedItemType}'))" class="btn btn-danger btn-sm px-2 py-1 shadow-sm text-white" style="background-color: #ED1B24;" title="Tolak"><i class="bi bi-x-lg"></i> Tolak</button>
+                                                        </div>
+                                                        `;
+                                    } else {
+                                        statusHtml = `<span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1 fw-semibold"><i class="bi bi-clock me-1"></i> Menunggu</span>`;
+                                    }
+                                }
+
+                                tbody.innerHTML += `
+                                                <tr>
+                                                    <td class="ps-4 fw-medium text-secondary small">${tglFormat}</td>
+                                                    <td class="text-center">${fotoHtml}</td>
+                                                    <td class="fw-bold text-dark">${itemName}</td>
+                                                    <td class="text-center">${badgeJenis}</td>
+                                                    <td class="text-center fw-bold">${qtyColor} <small class="text-muted fw-normal">Unit</small></td>
+                                                    <td><span class="badge bg-light text-dark border">${itemVendor}</span></td>
+                                                    <td>${penerimaHtml}</td>
+                                                    <td class="pe-4 text-muted small">${itemNote}</td>
+                                                    <td class="text-center pe-4">${statusHtml}</td>
+                                                </tr>
+                                                `;
+                    });
+                    renderTransactionPagination(totalPages);
+                }
+
+                function renderTransactionPagination(totalPages) {
+                    const summary = document.getElementById('inventoryHistorySummary');
+                    const pagination = document.getElementById('inventoryHistoryPagination');
+                    if (!transactionItems.length) {
+                        summary.textContent = '0 transaksi';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+
+                    const start = (transactionPage - 1) * transactionPageSize + 1;
+                    const end = Math.min(transactionPage * transactionPageSize, transactionItems.length);
+                    summary.textContent = `Menampilkan ${start}-${end} dari ${transactionItems.length} transaksi`;
+                    if (totalPages <= 1) {
+                        pagination.innerHTML = '';
+                        return;
+                    }
+
+                    const firstPage = Math.max(1, Math.min(transactionPage - 2, Math.max(1, totalPages - 4)));
+                    const lastPage = Math.min(totalPages, firstPage + 4);
+                    let html = `<button type="button" onclick="changeTransactionPage(${transactionPage - 1})" ${transactionPage === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+                    for (let page = firstPage; page <= lastPage; page += 1) {
+                        html += `<button type="button" onclick="changeTransactionPage(${page})" class="${page === transactionPage ? 'active' : ''}">${page}</button>`;
+                    }
+                    html += `<button type="button" onclick="changeTransactionPage(${transactionPage + 1})" ${transactionPage === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+                    pagination.innerHTML = html;
+                }
+
+                function changeTransactionPage(page) {
+                    const totalPages = Math.max(1, Math.ceil(transactionItems.length / transactionPageSize));
+                    transactionPage = Math.min(Math.max(1, page), totalPages);
+                    renderTransactionPage();
+                }
+
+                function resolveTransactionImage(value) {
+                    if (!value) return '';
+                    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('/api/files/')) return value;
+                    const fileName = value.replace(/^.*[\\\/]/, '');
+                    return `/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`;
+                }
+
+                function downloadLaporan(type) {
+                    const start = document.getElementById('inputStart').value;
+                    const end = document.getElementById('inputEnd').value;
+
+                    if (!start || !end) {
+                        Swal.fire('Peringatan', 'Harap isi rentang tanggal terlebih dahulu!', 'warning');
+                        return;
+                    }
+
+                    const endpoint = type === 'pdf' ? '/api/kelolabarang/download-pdf' : '/api/kelolabarang/download-excel';
+                    const url = `${window.API_BASE_URL}${endpoint}?start=${start}&end=${end}`;
+
+                    window.open(url, '_blank');
+                }
+
+                function approveTransaksi(id, jenis) {
+                    const subPath = jenis.toLowerCase() === 'masuk' ? 'masuk' : 'keluar';
+
+                    Swal.fire({
+                        title: 'Setujui Transaksi?',
+                        text: "Transaksi akan disetujui dan stok akan diperbarui.",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Setujui',
+                        cancelButtonText: 'Batal'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            try {
+                                const res = await fetch(`${window.API_BASE_URL}/api/kelolabarang/${subPath}/${id}/approve`, {
+                                    method: 'POST', credentials: 'include'
+                                });
+                                const resJson = await res.json();
+
+                                if (resJson.success) {
+                                    Swal.fire('Berhasil!', 'Transaksi disetujui.', 'success');
+                                    loadRiwayatTransaksi();
+                                } else {
+                                    Swal.fire('Gagal!', resJson.message, 'error');
+                                }
+                            } catch (e) { Swal.fire('Error', 'Kesalahan jaringan', 'error'); }
+                        }
+                    });
+                }
+
+                function tolakTransaksi(id, jenis) {
+                    const subPath = jenis.toLowerCase() === 'masuk' ? 'masuk' : 'keluar';
+
+                    Swal.fire({
+                        title: 'Tolak Transaksi?',
+                        text: "Apakah Anda yakin ingin menolak transaksi ini?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ED1B24',
+                        confirmButtonText: 'Ya, Tolak',
+                        cancelButtonText: 'Batal'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            try {
+                                const res = await fetch(`${window.API_BASE_URL}/api/kelolabarang/${subPath}/${id}/tolak`, {
+                                    method: 'POST', credentials: 'include'
+                                });
+                                const resJson = await res.json();
+
+                                if (resJson.success) {
+                                    Swal.fire('Ditolak!', 'Transaksi berhasil ditolak.', 'info');
+                                    loadRiwayatTransaksi();
+                                } else {
+                                    Swal.fire('Gagal!', resJson.message, 'error');
+                                }
+                            } catch (e) { Swal.fire('Error', 'Kesalahan jaringan', 'error'); }
+                        }
+                    });
+                }
+            </script>
+        }

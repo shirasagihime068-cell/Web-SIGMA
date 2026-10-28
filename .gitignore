@@ -1,0 +1,35 @@
+# Build output and IDE state
+**/bin/
+**/obj/
+**/.vs/
+.idea/
+*.user
+*.suo
+*.nupkg
+TestResults/
+
+# Local runtime and generated data
+.runtime/
+Database Backup/
+**/wwwroot/uploads/**
+**/logs/
+*.log
+*.bak
+
+# Local configuration and credentials
+**/appsettings.json
+**/appsettings.Development.json
+!**/appsettings.Example.json
+*.pfx
+*.p12
+*.pem
+*.key
+.env
+.env.*
+
+# Legacy duplicate retained only on this workstation
+FRONTEND SIGMANEW/
+
+# OS files
+.DS_Store
+Thumbs.db

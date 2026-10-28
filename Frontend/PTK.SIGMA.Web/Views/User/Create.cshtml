@@ -1,0 +1,281 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var apiBaseUrl = "";
+    ViewData["Title"] = "Tambah Pengguna Baru - SIGMA";
+}
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    @@keyframes dropdownFade {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-dropdown {
+        animation: dropdownFade 0.2s ease-out forwards;
+    }
+
+    .bg-pertamina-red {
+        background-color: #ED1B24 !important;
+    }
+
+    .text-pertamina-red {
+        color: #ED1B24 !important;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+    }
+
+    .form-container {
+        background-color: #ffffff;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 30px 35px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .header-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #e6f0fa;
+        color: #003876;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header-divider {
+        border-top: 1px solid #f0f0f0;
+        margin: 20px -35px 25px -35px;
+    }
+
+    .custom-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #333;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
+        display: block;
+    }
+
+    .custom-label .req {
+        color: #003876;
+    }
+
+    .custom-input {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        color: #212529;
+        font-weight: 500;
+        width: 100%;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .custom-input:focus {
+        background-color: #ffffff;
+        border-color: #003876 !important;
+        box-shadow: 0 0 0 4px rgba(0, 56, 118, 0.15) !important;
+        outline: none;
+    }
+
+    .dropdown-role:hover {
+        background-color: #e6f0fa;
+        color: #003876 !important;
+    }
+</style>
+
+<!-- KONTEN UTAMA -->
+<div class="container py-4 py-md-5 px-3 px-md-4 animate-fade-in">
+    <div class="form-container mx-auto" style="max-width: 750px;">
+
+        <div class="d-flex align-items-center mb-2">
+            <div class="header-icon me-3 shadow-sm flex-shrink-0">
+                <i class="bi bi-person-plus-fill fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-dark m-0 fs-5 fs-md-4">Tambah Pengguna Baru</h5>
+                <p class="text-muted small m-0 mt-1">Daftarkan akun baru ke dalam sistem untuk memberikan hak akses.</p>
+            </div>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <form id="formTambahUser">
+            <!-- NAMA LENGKAP -->
+            <div class="mb-4">
+                <label class="custom-label">NAMA LENGKAP</label>
+                <input type="text" id="inputNamaLengkap" class="custom-input" placeholder="Masukkan nama lengkap..."
+                       autocomplete="off" />
+            </div>
+
+            <!-- EMAIL -->
+            <div class="mb-4">
+                <label class="custom-label">EMAIL <span class="req">*</span></label>
+                <input type="email" id="inputEmail" class="custom-input" placeholder="Masukkan email..." required
+                       autocomplete="off" />
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <label class="custom-label">USERNAME <span class="req">*</span></label>
+                    <input type="text" id="inputUsername" class="custom-input" placeholder="Masukkan username..."
+                           required autocomplete="off" />
+                </div>
+                <div class="col-md-6">
+                    <label class="custom-label">PASSWORD <span class="req">*</span></label>
+                    <input type="password" id="inputPassword" class="custom-input" placeholder="Masukkan password..."
+                           required autocomplete="new-password" />
+                    <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">Pastikan password diingat
+                        atau dicatat dengan baik.</div>
+                    </div>
+                </div>
+
+                <!-- CUSTOM BOOTSTRAP DROPDOWN ROLE -->
+                <div class="mb-5">
+                    <label class="custom-label">ROLE / HAK AKSES <span class="req">*</span></label>
+
+                    <div class="dropdown">
+                        <button
+                            class="btn custom-input text-start d-flex justify-content-between align-items-center dropdown-toggle shadow-none"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span id="selectedRoleText"> Pilih Hak Akses </span>
+                        </button>
+                        <ul class="dropdown-menu w-100 border-0 shadow-lg rounded-4 animate-dropdown mt-2 p-2 bg-white">
+                            <li><a class="dropdown-item rounded-3 mb-1 dropdown-role text-dark text-decoration-none py-2 px-3 fw-medium"
+                                       href="#" data-value="Admin">Admin</a></li>
+                                <li><a class="dropdown-item rounded-3 mb-1 dropdown-role text-dark text-decoration-none py-2 px-3 fw-medium"
+                                           href="#" data-value="Staff">Staff</a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Hidden input untuk binding value role -->
+                            <input type="hidden" id="hiddenRole" required />
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="/User/Index"
+                               class="btn btn-light border rounded-pill px-4 py-2 fw-semibold shadow-sm text-dark"
+                               style="font-size: 0.85rem;">Batal</a>
+                            <button type="submit"
+                                    class="btn btn-pertamina-red rounded-pill px-4 py-2 fw-semibold shadow-sm text-nowrap"
+                                    style="font-size: 0.85rem;">
+                                <i class="bi bi-save me-1"></i> Simpan Pengguna
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+            @section Scripts {
+                <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css">
+                <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+                <script>
+                    window.API_BASE_URL = '@apiBaseUrl';
+
+                    document.addEventListener("DOMContentLoaded", function () {
+                    const dropdownItems = document.querySelectorAll('.dropdown-role');
+                    const selectedText = document.getElementById('selectedRoleText');
+                    const hiddenRoleInput = document.getElementById('hiddenRole');
+
+                    dropdownItems.forEach(item => {
+                    item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const value = this.getAttribute('data-value');
+                    const text = this.textContent;
+
+                    selectedText.textContent = text;
+                    hiddenRoleInput.value = value;
+                    });
+                    });
+
+                    document.getElementById('formTambahUser').addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const roleValue = hiddenRoleInput.value;
+                    if (!roleValue) {
+                    Swal.fire('Perhatian', 'Silakan pilih Role / Hak Akses terlebih dahulu.', 'warning');
+                    return;
+                    }
+
+                    const payload = {
+                    NamaLengkap: document.getElementById('inputNamaLengkap').value.trim() || null,
+                    Email: document.getElementById('inputEmail').value.trim(),
+                    Username: document.getElementById('inputUsername').value.trim(),
+                    Password: document.getElementById('inputPassword').value,
+                    Role: roleValue
+                    };
+
+                    try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/user`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    credentials: 'include'
+                    });
+
+                    if (response.status === 401) {
+                    window.location.href = '/Auth/Login';
+                    return;
+                    }
+
+                    const result = await response.json().catch(() => ({ success: response.ok }));
+
+                    if (response.ok && (result.success !== false)) {
+                    Swal.fire({
+                    title: 'Berhasil!',
+                    text: result.message || 'Pengguna baru berhasil ditambahkan.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-4 shadow-lg' }
+                    }).then(() => {
+                    window.location.href = '/User/Index';
+                    });
+                    } else {
+                    Swal.fire('Gagal!', result.message || 'Gagal menambahkan pengguna baru.', 'error');
+                    }
+                    } catch (error) {
+                    Swal.fire('Gagal!', 'Tidak dapat terhubung ke server backend.', 'error');
+                    }
+                    });
+                    });
+                </script>
+            }
