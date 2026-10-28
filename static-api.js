@@ -1,7 +1,8 @@
 (function () {
     'use strict';
 
-    const inventory = [
+    const exportedData = window.SIGMA_ACTUAL_DATA || {};
+    const fallbackInventory = [
         { id: 1, nama: 'Laptop Dell Latitude 5440', kategori: 'Laptop', kondisi: 'Baik', jumlah: 7, snLaptop: 'DL-5440-001', namaLokasi: 'Rak A-01', keterangan: 'Perangkat operasional', createdAt: '2026-10-21T08:00:00Z' },
         { id: 2, nama: 'Laptop Lenovo ThinkPad E14', kategori: 'Laptop', kondisi: 'Baik', jumlah: 5, snLaptop: 'LN-E14-014', namaLokasi: 'Ruang ICT', keterangan: 'Unit kerja lapangan', createdAt: '2026-10-19T08:00:00Z' },
         { id: 3, nama: 'Monitor Dell P2422H', kategori: 'Monitor', kondisi: 'Baik', jumlah: 12, snLaptop: 'MON-P24-008', namaLokasi: 'Rak B-02', keterangan: 'Monitor 24 inci', createdAt: '2026-10-16T08:00:00Z' },
@@ -11,6 +12,9 @@
         { id: 7, nama: 'Toner HP 151A', kategori: 'Tinta / Toner / Cartridge', kondisi: 'Baik', jumlah: 20, snLaptop: 'TNR-151A', namaLokasi: 'Rak C-01', keterangan: 'Stok toner printer', createdAt: '2026-10-05T08:00:00Z' },
         { id: 8, nama: 'Printer HP LaserJet Pro', kategori: 'Printer', kondisi: 'Rusak', jumlah: 1, snLaptop: 'PRN-HP-009', namaLokasi: 'Ruang Perbaikan', keterangan: 'Menunggu perbaikan teknisi', createdAt: '2026-10-02T08:00:00Z' }
     ];
+    const inventory = Array.isArray(exportedData.inventory) && exportedData.inventory.length
+        ? exportedData.inventory
+        : fallbackInventory;
 
     const categories = [...new Set(inventory.map(item => item.kategori))];
     const ok = data => new Response(JSON.stringify(data), {
@@ -23,7 +27,9 @@
         const search = (url.searchParams.get('search') || '').toLowerCase();
         const filter = url.searchParams.get('filter') || '';
         const pageSize = Number(url.searchParams.get('pageSize')) || 8;
-        const rows = inventory.filter(item => {
+        const currentPage = Math.max(1, Number(url.searchParams.get('page')) || 1);
+        const sort = url.searchParams.get('sort') || 'terbaru';
+        let rows = inventory.filter(item => {
             const matchesCategory = !category || item.kategori === category;
             const matchesSearch = !search || [item.nama, item.snLaptop, item.namaLokasi, item.keterangan]
                 .some(value => String(value || '').toLowerCase().includes(search));
@@ -34,16 +40,37 @@
                     : true;
             return matchesCategory && matchesSearch && matchesFilter;
         });
+
+        rows = [...rows].sort((left, right) => {
+            if (sort === 'terlama') return new Date(left.createdAt || 0) - new Date(right.createdAt || 0);
+            if (sort === 'nama-az') return String(left.nama || '').localeCompare(String(right.nama || ''), 'id');
+            if (sort === 'nama-za') return String(right.nama || '').localeCompare(String(left.nama || ''), 'id');
+            if (sort === 'stok-tertinggi') return Number(right.jumlah || 0) - Number(left.jumlah || 0);
+            if (sort === 'stok-terendah') return Number(left.jumlah || 0) - Number(right.jumlah || 0);
+            return new Date(right.createdAt || 0) - new Date(left.createdAt || 0);
+        });
+
+        const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+        const safePage = Math.min(currentPage, totalPages);
+        const start = (safePage - 1) * pageSize;
         return {
             success: true,
             data: {
-                data: rows.slice(0, pageSize),
-                pagination: { currentPage: 1, pageSize, totalItems: rows.length, totalPages: 1 }
+                data: rows.slice(start, start + pageSize).map(item => ({
+                    ...item,
+                    dokumentasi: item.dokumentasi
+                        ? new URL(item.dokumentasi, window.location.href).href
+                        : ''
+                })),
+                pagination: { currentPage: safePage, pageSize, totalItems: rows.length, totalPages }
             }
         };
     }
 
     function dashboardSummary() {
+        if (exportedData.summary && typeof exportedData.summary === 'object') {
+            return { success: true, data: exportedData.summary };
+        }
         return {
             success: true,
             data: {
@@ -97,7 +124,17 @@
         if (path.endsWith('/api/activitylog') || path.includes('/api/activitylog/')) return { success: true, data: [] };
         if (path.endsWith('/api/perangkat/arsip')) return { success: true, data: [] };
         if (path.endsWith('/api/perangkat/validasi')) return { success: true, data: [] };
-        if (path.endsWith('/api/perangkat/cetak-laporan')) return { success: true, data: inventory };
+        if (path.endsWith('/api/perangkat/cetak-laporan')) {
+            return {
+                success: true,
+                data: inventory.map(item => ({
+                    ...item,
+                    dokumentasi: item.dokumentasi
+                        ? new URL(item.dokumentasi, window.location.href).href
+                        : ''
+                }))
+            };
+        }
         if (path.endsWith('/api/kelolabarang')) return { success: true, data: { masuk: [], keluar: [] } };
         if (path.includes('/api/peminjaman/create-options')) return { success: true, data: { perangkat: inventory, kategori: categories, lokasi: [] } };
         if (path.endsWith('/api/peminjaman')) return { success: true, data: [], pagination: { totalItems: 0, totalPages: 1, currentPage: 1 } };
