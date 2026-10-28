@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Demo statis SIGMA - Sistem Informasi Gudang dan Manajemen">
+    <title>SIGMA | Demo Inventaris</title>
+    <link rel="stylesheet" href="pages.css">
+</head>
+<body>
+    <div class="demo-notice">
+        <span class="demo-dot" aria-hidden="true"></span>
+        Mode demo statis — data yang tampil hanya contoh dan tidak tersambung ke database.
+    </div>
+
+    <header class="topbar">
+        <a class="brand" href="#dashboard" aria-label="SIGMA beranda">
+            <img src="Frontend/PTK.SIGMA.Web/wwwroot/images/login/ptk-logo-color.png" alt="Pertamina Trans Kontinental">
+            <span class="brand-copy"><strong>SIGMA</strong><small>Sistem Informasi Gudang dan Manajemen</small></span>
+        </a>
+        <div class="topbar-actions">
+            <span class="date-label" id="todayLabel"></span>
+            <div class="avatar" aria-label="Pengguna demo">AD</div>
+        </div>
+    </header>
+
+    <div class="app-shell">
+        <aside class="sidebar" aria-label="Navigasi demo">
+            <nav>
+                <a class="nav-link active" href="#dashboard"><span aria-hidden="true">▦</span> Dashboard</a>
+                <a class="nav-link" href="#inventory"><span aria-hidden="true">▣</span> Inventaris</a>
+                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">↔</span> Barang Masuk/Keluar</button>
+                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">⌁</span> Peminjaman</button>
+                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">✓</span> Stock Opname</button>
+            </nav>
+            <div class="sidebar-footer">
+                <strong>PTK SIGMA</strong>
+                <span>Inventory Management</span>
+            </div>
+        </aside>
+
+        <main class="content" id="dashboard">
+            <section class="hero-card">
+                <div>
+                    <span class="eyebrow">DASHBOARD INVENTARIS</span>
+                    <h1>Selamat datang di SIGMA</h1>
+                    <p>Pantau perangkat, kondisi barang, dan aktivitas gudang dalam satu tempat.</p>
+                </div>
+                <img src="Frontend/PTK.SIGMA.Web/wwwroot/images/sigma-shell/header-sigma.png" alt="Ilustrasi gudang PTK">
+            </section>
+
+            <section class="kpi-grid" aria-label="Ringkasan inventaris">
+                <article class="kpi-card">
+                    <span class="kpi-icon blue" aria-hidden="true">▦</span>
+                    <div><small>Total Inventaris</small><strong>77</strong><span>8 data contoh ditampilkan</span></div>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon green" aria-hidden="true">✓</span>
+                    <div><small>Kondisi Baik</small><strong>63</strong><span>81,8% dari inventaris</span></div>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon orange" aria-hidden="true">↗</span>
+                    <div><small>Sedang Dipinjam</small><strong>9</strong><span>Perlu pemantauan</span></div>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon red" aria-hidden="true">!</span>
+                    <div><small>Perlu Perbaikan</small><strong>5</strong><span>Tindak lanjut teknisi</span></div>
+                </article>
+            </section>
+
+            <section class="inventory-card" id="inventory">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-icon" aria-hidden="true">▦</span>
+                        <div><h2>Daftar Inventaris</h2><p>Temukan dan kelola perangkat gudang</p></div>
+                    </div>
+                    <span class="demo-badge">DATA DEMO</span>
+                </div>
+
+                <form class="filter-panel" id="inventoryFilter">
+                    <label class="search-field">
+                        <span>Cari perangkat</span>
+                        <div class="control-wrap"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Nama perangkat, kode, atau lokasi..."></div>
+                    </label>
+                    <label>
+                        <span>Kategori</span>
+                        <select id="categoryFilter">
+                            <option value="">Semua kategori</option>
+                            <option>Laptop</option>
+                            <option>Monitor</option>
+                            <option>Printer</option>
+                            <option>Jaringan</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Status</span>
+                        <select id="statusFilter">
+                            <option value="">Semua status</option>
+                            <option>Baik</option>
+                            <option>Dipinjam</option>
+                            <option>Perbaikan</option>
+                        </select>
+                    </label>
+                    <button class="reset-button" type="reset">↻ Reset</button>
+                </form>
+
+                <div class="table-meta">
+                    <div><strong id="resultCount">8</strong><span> perangkat ditemukan</span></div>
+                    <span>Urutkan: <strong>Terbaru</strong></span>
+                </div>
+
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr><th>No.</th><th>Kode</th><th>Nama Perangkat</th><th>Kategori</th><th>Lokasi</th><th>Kondisi</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="inventoryRows"></tbody>
+                    </table>
+                    <div class="empty-state" id="emptyState" hidden>Tidak ada perangkat yang cocok dengan filter.</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="demoToast" role="status" aria-live="polite">Fitur ini tersedia pada aplikasi SIGMA lengkap.</div>
+    <script src="pages.js"></script>
+</body>
+</html>
