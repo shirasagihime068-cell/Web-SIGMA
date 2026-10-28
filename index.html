@@ -1,128 +1,261 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Demo statis SIGMA - Sistem Informasi Gudang dan Manajemen">
-    <title>SIGMA | Demo Inventaris</title>
-    <link rel="stylesheet" href="pages.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#b60812" />
+    <title>Masuk - SIGMA</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Michroma&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/fonts/inter/inter-300-700.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/css/login.css?v=kn0K6KhiIj2JwnK3tsuvcsR_P-6cMmf8UYfElfpLhEw" />
+    <script src="static-api.js"></script>
 </head>
 <body>
-    <div class="demo-notice">
-        <span class="demo-dot" aria-hidden="true"></span>
-        Mode demo statis — data yang tampil hanya contoh dan tidak tersambung ke database.
-    </div>
+    <main class="page-shell" id="pageShell">
+        <div class="background-vignette" aria-hidden="true"></div>
 
-    <header class="topbar">
-        <a class="brand" href="#dashboard" aria-label="SIGMA beranda">
-            <img src="Frontend/PTK.SIGMA.Web/wwwroot/images/login/ptk-logo-color.png" alt="Pertamina Trans Kontinental">
-            <span class="brand-copy"><strong>SIGMA</strong><small>Sistem Informasi Gudang dan Manajemen</small></span>
-        </a>
-        <div class="topbar-actions">
-            <span class="date-label" id="todayLabel"></span>
-            <div class="avatar" aria-label="Pengguna demo">AD</div>
-        </div>
-    </header>
+        <section class="hero" aria-labelledby="brandTitle">
+            <div class="hero-stack">
+                <div class="brand-copy">
+                    <h1 id="brandTitle" class="brand-title">SIGMA</h1>
+                    <p class="brand-subtitle">
+                        <span>Sistem Informasi Gudang dan</span><br class="mobile-break" />
+                        <span class="mobile-second">Management ICT</span>
+                    </p>
+                    <p class="brand-company">PT Pertamina Trans Kontinental</p>
+                    <div class="brand-kicker" aria-hidden="true"></div>
+                </div>
 
-    <div class="app-shell">
-        <aside class="sidebar" aria-label="Navigasi demo">
-            <nav>
-                <a class="nav-link active" href="#dashboard"><span aria-hidden="true">▦</span> Dashboard</a>
-                <a class="nav-link" href="#inventory"><span aria-hidden="true">▣</span> Inventaris</a>
-                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">↔</span> Barang Masuk/Keluar</button>
-                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">⌁</span> Peminjaman</button>
-                <button class="nav-link" type="button" data-demo-action><span aria-hidden="true">✓</span> Stock Opname</button>
-            </nav>
-            <div class="sidebar-footer">
-                <strong>PTK SIGMA</strong>
-                <span>Inventory Management</span>
             </div>
-        </aside>
+        </section>
 
-        <main class="content" id="dashboard">
-            <section class="hero-card">
-                <div>
-                    <span class="eyebrow">DASHBOARD INVENTARIS</span>
-                    <h1>Selamat datang di SIGMA</h1>
-                    <p>Pantau perangkat, kondisi barang, dan aktivitas gudang dalam satu tempat.</p>
+        <section class="login-wrap" aria-label="Form login SIGMA">
+            <div class="login-card login-folder-card">
+                <img class="folder-frame" src="Frontend/PTK.SIGMA.Web/wwwroot/images/login/login-folder.png" alt="Folder blueprint login" draggable="false" />
+
+                <div class="folder-vertical-brand" aria-hidden="true">
+                    <img src="Frontend/PTK.SIGMA.Web/wwwroot/images/login/ptk-logo-color.png" alt="" />
                 </div>
-                <img src="Frontend/PTK.SIGMA.Web/wwwroot/images/sigma-shell/header-sigma.png" alt="Ilustrasi gudang PTK">
-            </section>
 
-            <section class="kpi-grid" aria-label="Ringkasan inventaris">
-                <article class="kpi-card">
-                    <span class="kpi-icon blue" aria-hidden="true">▦</span>
-                    <div><small>Total Inventaris</small><strong>77</strong><span>8 data contoh ditampilkan</span></div>
-                </article>
-                <article class="kpi-card">
-                    <span class="kpi-icon green" aria-hidden="true">✓</span>
-                    <div><small>Kondisi Baik</small><strong>63</strong><span>81,8% dari inventaris</span></div>
-                </article>
-                <article class="kpi-card">
-                    <span class="kpi-icon orange" aria-hidden="true">↗</span>
-                    <div><small>Sedang Dipinjam</small><strong>9</strong><span>Perlu pemantauan</span></div>
-                </article>
-                <article class="kpi-card">
-                    <span class="kpi-icon red" aria-hidden="true">!</span>
-                    <div><small>Perlu Perbaikan</small><strong>5</strong><span>Tindak lanjut teknisi</span></div>
-                </article>
-            </section>
-
-            <section class="inventory-card" id="inventory">
-                <div class="section-heading">
-                    <div>
-                        <span class="section-icon" aria-hidden="true">▦</span>
-                        <div><h2>Daftar Inventaris</h2><p>Temukan dan kelola perangkat gudang</p></div>
+                <div class="folder-content">
+                    <div class="card-brand card-brand-folder">
+                        <div class="app-icon" aria-hidden="true">
+                            <svg viewBox="0 0 64 64" role="presentation">
+                                <path d="M32 8 52 19v25L32 56 12 44V19L32 8Z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                                <path d="m13 20 19 11 19-11M32 31v24" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" />
+                                <path d="m32 8 20 11-20 12-19-11L32 8Z" fill="currentColor" opacity=".22" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2>SIGMA</h2>
+                            <p>Sistem Informasi Gudang<br />dan Management ICT</p>
+                        </div>
                     </div>
-                    <span class="demo-badge">DATA DEMO</span>
+
+                    <form id="loginForm" class="folder-form" novalidate>
+                        <label class="field-label" for="email">Email</label>
+                        <div class="input-shell folder-input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 7l9 6 9-6" /></svg>
+                            </span>
+                            <input id="email"
+                                   type="email"
+                                   autocomplete="username"
+                                   inputmode="email"
+                                   placeholder="email@example.com"
+                                   required />
+                        </div>
+
+                        <label class="field-label" for="password">Password</label>
+                        <div class="input-shell folder-input-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M6 10h12v10H6zM8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                            </span>
+                            <input id="password"
+                                   type="password"
+                                   autocomplete="current-password"
+                                   placeholder="••••••••"
+                                   required />
+                            <button class="icon-button" id="togglePassword" type="button" aria-label="Tampilkan password">
+                                <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.7" /></svg>
+                            </button>
+                        </div>
+
+                        <label class="field-label" for="captchaInput">Kode Verifikasi</label>
+                        <div class="captcha-row folder-captcha-row">
+                            <div class="captcha-box">
+                                <img id="captchaImg" alt="Kode verifikasi CAPTCHA" />
+                            </div>
+                            <button class="refresh-button" id="refreshCaptcha" type="button" title="Ganti kode verifikasi">
+                                <svg viewBox="0 0 24 24"><path d="M20 6v5h-5M4 18v-5h5M5.8 9a7 7 0 0 1 12-2.4L20 11M4 13l2.2 4.4A7 7 0 0 0 18.2 15" /></svg>
+                                <span>Ganti</span>
+                            </button>
+                        </div>
+
+                        <div class="input-shell verify-shell folder-input-shell verify-folder-shell">
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6l8-3Z" /></svg>
+                            </span>
+                            <input id="captchaInput"
+                                   type="text"
+                                   maxlength="5"
+                                   autocomplete="off"
+                                   autocapitalize="characters"
+                                   spellcheck="false"
+                                   placeholder="KETIK KODE DI ATAS"
+                                   required />
+                        </div>
+
+                        <button class="primary-button folder-primary-button" id="btnLogin" type="submit">
+                            <span class="button-label">Masuk ke Sistem</span>
+                            <span class="button-arrow" aria-hidden="true">&rarr;</span>
+                        </button>
+                    </form>
                 </div>
+            </div>
+        </section>
 
-                <form class="filter-panel" id="inventoryFilter">
-                    <label class="search-field">
-                        <span>Cari perangkat</span>
-                        <div class="control-wrap"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Nama perangkat, kode, atau lokasi..."></div>
-                    </label>
-                    <label>
-                        <span>Kategori</span>
-                        <select id="categoryFilter">
-                            <option value="">Semua kategori</option>
-                            <option>Laptop</option>
-                            <option>Monitor</option>
-                            <option>Printer</option>
-                            <option>Jaringan</option>
-                        </select>
-                    </label>
-                    <label>
-                        <span>Status</span>
-                        <select id="statusFilter">
-                            <option value="">Semua status</option>
-                            <option>Baik</option>
-                            <option>Dipinjam</option>
-                            <option>Perbaikan</option>
-                        </select>
-                    </label>
-                    <button class="reset-button" type="reset">↻ Reset</button>
-                </form>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
 
-                <div class="table-meta">
-                    <div><strong id="resultCount">8</strong><span> perangkat ditemukan</span></div>
-                    <span>Urutkan: <strong>Terbaru</strong></span>
-                </div>
+    <script>
+        (() => {
+            'use strict';
 
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr><th>No.</th><th>Kode</th><th>Nama Perangkat</th><th>Kategori</th><th>Lokasi</th><th>Kondisi</th><th>Status</th></tr>
-                        </thead>
-                        <tbody id="inventoryRows"></tbody>
-                    </table>
-                    <div class="empty-state" id="emptyState" hidden>Tidak ada perangkat yang cocok dengan filter.</div>
-                </div>
-            </section>
-        </main>
-    </div>
+            const apiBaseUrl = '';
+            const requestedReturnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            const postLoginUrl = requestedReturnUrl && requestedReturnUrl.startsWith('/') && !requestedReturnUrl.startsWith('//')
+                ? requestedReturnUrl
+                : 'dashboard.html';
+            const loginForm = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const captchaInput = document.getElementById('captchaInput');
+            const captchaImg = document.getElementById('captchaImg');
+            const refreshCaptchaButton = document.getElementById('refreshCaptcha');
+            const togglePassword = document.getElementById('togglePassword');
+            const loginButton = document.getElementById('btnLogin');
+            const toast = document.getElementById('toast');
+            let toastTimer;
 
-    <div class="toast" id="demoToast" role="status" aria-live="polite">Fitur ini tersedia pada aplikasi SIGMA lengkap.</div>
-    <script src="pages.js"></script>
+            function showToast(message, type = '') {
+                window.clearTimeout(toastTimer);
+                toast.textContent = message;
+                toast.className = `toast show ${type}`.trim();
+                toastTimer = window.setTimeout(() => {
+                    toast.className = 'toast';
+                }, 3500);
+            }
+
+            function refreshCaptcha(focusInput = false) {
+                captchaImg.src = `captcha.svg`;
+                captchaInput.value = '';
+                if (focusInput) {
+                    captchaInput.focus();
+                }
+            }
+
+            function setSubmitting(isSubmitting) {
+                loginButton.disabled = isSubmitting;
+                loginButton.classList.toggle('is-loading', isSubmitting);
+                loginButton.querySelector('.button-label').textContent = isSubmitting
+                    ? 'Memproses...'
+                    : 'Masuk ke Sistem';
+            }
+
+            refreshCaptchaButton.addEventListener('click', () => refreshCaptcha(true));
+
+            captchaImg.addEventListener('error', () => {
+                showToast('CAPTCHA gagal dimuat. Pastikan backend sedang berjalan.', 'error');
+            });
+
+            // Generate CAPTCHA immediately on the first page load.
+            // Previously refreshCaptcha() was only called after a failed login
+            // or when the refresh button was clicked, so the initial image
+            // remained empty.
+            refreshCaptcha(false);
+
+            togglePassword.addEventListener('click', () => {
+                const isVisible = passwordInput.type === 'text';
+                passwordInput.type = isVisible ? 'password' : 'text';
+                togglePassword.setAttribute('aria-label', isVisible ? 'Tampilkan password' : 'Sembunyikan password');
+                passwordInput.focus();
+            });
+
+            loginForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const captchaCode = captchaInput.value.trim();
+
+                if (!email || !password || !captchaCode) {
+                    showToast('Lengkapi email, password, dan kode verifikasi.', 'error');
+                    return;
+                }
+
+                if (!/^\S+@\S+\.\S+$/.test(email)) {
+                    showToast('Format email belum valid.', 'error');
+                    emailInput.focus();
+                    return;
+                }
+
+                setSubmitting(true);
+
+                try {
+                    const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ email, password, captchaCode })
+                    });
+
+                    const result = await response.json().catch(() => null);
+
+                    if (response.ok && result?.success) {
+                        const reminderPrefix = 'sigma.opname.reminder.';
+                        try {
+                            Object.keys(window.sessionStorage)
+                                .filter(key => key.startsWith(reminderPrefix))
+                                .forEach(key => window.sessionStorage.removeItem(key));
+                            Object.keys(window.localStorage)
+                                .filter(key => key.startsWith(reminderPrefix))
+                                .forEach(key => window.localStorage.removeItem(key));
+                        } catch {
+                            // Storage can be unavailable in private/restricted browser contexts.
+                        }
+
+                        showToast('Login berhasil. Mengalihkan ke dashboard...', 'success');
+                        window.location.assign(postLoginUrl);
+                        return;
+                    }
+
+                    showToast(result?.message || 'Email, password, atau CAPTCHA tidak sesuai.', 'error');
+
+                    if (result?.newCaptchaImage) {
+                        captchaImg.src = result.newCaptchaImage;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+                    } else {
+                        refreshCaptcha(true);
+                    }
+                } catch (error) {
+                    console.error('Login API error:', error);
+                    showToast('Tidak dapat terhubung ke server backend.', 'error');
+                    refreshCaptcha(false);
+                } finally {
+                    setSubmitting(false);
+                }
+            });
+
+        })();
+    </script>
 </body>
 </html>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210" height="70" viewBox="0 0 210 70">
+  <rect width="210" height="70" rx="10" fill="#eef5fb"/>
+  <path d="M8 52 202 18M3 24l204 27M24 3l11 64M174 4l-9 62" stroke="#aac3d8" stroke-width="2" opacity=".7"/>
+  <text x="105" y="47" text-anchor="middle" font-family="monospace" font-size="34" font-weight="700" letter-spacing="8" fill="#0b4f8a">SIGMA</text>
+</svg>

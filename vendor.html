@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#063b79" />
+    <title>Kelola Vendor - SIGMA - PTK.SIGMA</title>
+
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/fonts/inter/inter-300-700.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/css/bootstrap-icons-fix.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/css/site.css?v=bYSUl9WKXSt9eVUpnwTfG0AtLhJNY0OCnhAI3aJ4lDQ" />
+    
+
+    <!-- CSS CUSTOM UNTUK MERAPIKAN PROFIL & HEADER -->
+    <style>
+            /* Logo Topbar Statis */
+            .topbar-logo-link:hover,
+            .topbar-logo-link:focus,
+            .topbar-logo-link:active,
+            .topbar-logo:hover {
+                transform: none !important;
+                animation: none !important;
+                box-shadow: none !important;
+            }
+
+            /* 
+             * PROFIL USER MINIMALIS & ELEGAN (Tanpa Kotak)
+             */
+            .sidebar-user-profile {
+                padding: 10px 20px 25px;
+                margin-bottom: 15px;
+                text-align: center;
+                position: relative;
+            }
+
+            /* Garis bawah gradien halus sebagai pemisah, bukan kotak */
+            .sidebar-user-profile::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 15%;
+                width: 70%;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            }
+
+            /* Role Akses (Di Atas, Besar, Menonjol) */
+            .sidebar-role-text {
+                color: #ffffff;
+                font-size: 1.35rem;
+                font-weight: 800;
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                display: block;
+            }
+
+            /* Nama User (Di Bawah, Lebih Kecil, Rapi) */
+            .sidebar-name-text {
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.95rem;
+                font-weight: 400;
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 0 10px;
+            }
+
+            /* Area Tombol Close Sidebar (Hanya untuk Mobile) */
+            .sidebar-header-mobile {
+                display: flex;
+                justify-content: flex-end;
+                padding: 15px 15px 0 15px;
+            }
+    </style>
+    <script src="static-api.js"></script>
+</head>
+
+<body class="app-body page-vendor page-vendor-index" data-controller="vendor" data-action="index">
+      
+    <aside class="offcanvas offcanvas-start app-sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarTitle"
+           data-bs-scroll="true">
+           
+        <!-- Tombol Close (Hanya muncul di layar kecil/mobile) -->
+        <div class="sidebar-header-mobile d-lg-none">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                    aria-label="Tutup menu"></button>
+        </div>
+
+        <!-- Profil Pengguna Minimalis (Role di atas, Nama di bawah) -->
+        <div class="sidebar-user-profile">
+            <!-- ID "sidebarRole" dipertahankan agar script Anda tetap bisa mengisi datanya -->
+            <div id="sidebarRole" class="sidebar-role-text">Memuat akses...</div>
+            
+            <!-- ID "sidebarUsername" dipertahankan -->
+            <div id="sidebarUsername" class="sidebar-name-text" title="Memuat pengguna...">Memuat pengguna...</div>
+        </div>
+
+        <nav class="sidebar-navigation" aria-labelledby="sidebarTitle">
+            <div id="sidebarTitle" class="sidebar-section-label">Menu Utama</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="dashboard" href="dashboard.html"><i
+                    class="bi bi-grid-1x2-fill sidebar-icon"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="archive"
+                                            href="arsip.html"><i class="bi bi-archive-fill sidebar-icon"></i><span>Arsip
+                        Inventaris</span></a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="reports"
+                                                href="laporan.html"><i
+                            class="bi bi-file-earmark-pdf-fill sidebar-icon"></i><span>Laporan &amp; PDF</span></a></li>
+
+                            <li class="sidebar-section-label sidebar-section-spacer">Operasional</li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="inventory"
+                                                    href="inventaris.html"><i class="bi bi-box-seam-fill sidebar-icon"></i><span>Manajemen
+                                Inventaris</span></a></li>
+                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="loans"
+                                                        href="peminjaman.html"><i class="bi bi-arrow-left-right sidebar-icon"></i><span>Sirkulasi
+                                    Peminjaman</span></a></li>
+                                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="stocktake"
+                                                            href="opname.html"><i class="bi bi-clipboard2-check-fill sidebar-icon"></i><span class="nav-label">Stock
+                                        Opname</span><span id="opnameReminderBadge" class="opname-reminder-badge d-none" title="Stock opname bulan ini belum lengkap" aria-label="Stock opname bulan ini belum lengkap">!</span></a></li>
+
+                                        <li class="sidebar-section-label sidebar-section-spacer">Administrasi</li>
+                                        <li class="nav-item admin-only-menu"><a class="nav-link nav-link-custom" data-nav-key="users"
+                                                                                href="pengguna.html"><i class="bi bi-people-fill sidebar-icon"></i><span>Manajemen
+                                            Pengguna</span></a></li>
+                                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="vendors" href="vendor.html"><i
+                                                class="bi bi-buildings-fill sidebar-icon"></i><span>Manajemen Vendor</span></a></li>
+                                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="profile" href="profil.html"><i
+                                                    class="bi bi-person-gear sidebar-icon"></i><span>Pengaturan Akun</span></a></li>
+                                                </ul>
+                                            </nav>
+
+                                            <div class="sidebar-footer">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span><strong>PTK SIGMA</strong><small>Inventory Management</small></span>
+                                            </div>
+                                        </aside>
+
+                                        <div class="app-shell">
+                                            <div class="sigma-header-scene">
+                                                <header class="sigma-navbar">
+            
+                                                    <!-- Tombol Hamburger -->
+                                                    <button class="sigma-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
+                                                            aria-controls="sidebarMenu" aria-label="Buka menu">
+                                                        <i class="bi bi-list"></i>
+                                                    </button>
+            
+                                                    <!-- Posisi Logo di Header -->
+                                                    <a href="dashboard.html" class="topbar-logo-link" aria-label="SIGMA Dashboard">
+                                                        <img src="Frontend/PTK.SIGMA.Web/wwwroot/assets/logo-white.png" alt="PT Pertamina Trans Kontinental" class="topbar-logo" />
+                                                    </a>
+
+                                                    <div class="topbar-actions">
+                                                        
+<!-- PERBAIKAN: style item notifikasi unread (background tint + garis aksen kiri + label "Baru").
+     Idealnya style ini dipindahkan ke stylesheet utama, ditaruh di sini dulu supaya langsung terlihat. -->
+<style>
+    .notif-title-unread {
+        font-weight: 800;
+        color: #173a5f;
+    }
+
+    .notif-title-read {
+        font-weight: 650;
+        color: #4a6079;
+    }
+
+    .notif-badge-new {
+        font-size: .58rem;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(135deg, #0d6efd, #2b8cff);
+        padding: .23rem .52rem;
+        border-radius: 999px;
+        letter-spacing: .02em;
+    }
+</style>
+
+<div class="dropdown">
+    <!-- PERBAIKAN: Menambahkan position-relative agar badge tidak lari ke ujung layar -->
+    <a class="nav-link position-relative dropdown-toggle no-arrow notif-bell-toggle d-flex align-items-center justify-content-center text-white"
+       href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false"
+       id="notifDropdownToggle" title="Notifikasi aktivitas">
+        <i class="bi bi-bell-fill"></i>
+        <!-- PERBAIKAN: Posisi badge dibuat lebih pas ke dalam agar tidak terpotong tepi layar -->
+        <span id="notif-badge" class="position-absolute badge rounded-pill notif-unread-badge d-none"
+              style="top: 0; right: -2px; transform: translate(25%, -25%);">0</span>
+    </a>
+
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu mt-2" aria-labelledby="notifDropdownToggle">
+        <div class="notif-header">
+            <div class="notif-header-main">
+                <div class="notif-header-icon"><i class="bi bi-bell-fill"></i></div>
+                <div>
+                    <strong class="notif-header-title">Notifikasi Aktivitas</strong>
+                    <span class="notif-header-subtitle">Pembaruan terbaru dari sistem</span>
+                </div>
+            </div>
+            <span id="notif-badge-count" class="notif-count-pill">0 Baru</span>
+        </div>
+
+        <!-- CONTAINER -->
+        <div id="notif-list-container">
+            <div class="text-center py-5 text-muted small">
+                <div class="spinner-border spinner-border-sm notif-spinner me-2" role="status"></div>
+                Memuat notifikasi...
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div id="notif-footer-action" class="d-none notif-footer justify-content-between align-items-center">
+            <!-- MENGUBAH TEKS DAN FUNGSI TOMBOL HAPUS -->
+            <button type="button" class="notif-action-btn text-secondary border-0 bg-transparent"
+                    onclick="clearReadNotifications()" title="Hapus notifikasi yang sudah dibaca">
+                <i class="bi bi-trash3 me-1"></i> Hapus Terbaca
+            </button>
+            <button type="button" class="notif-action-btn text-primary border-0 bg-transparent"
+                    onclick="markAllAsRead()">
+                <i class="bi bi-check2-all me-1"></i> Tandai dibaca
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+    window.API_BASE_URL = '';
+    window.BACKEND_BASE_URL = '';
+
+    let notificationItemNames;
+    let notificationLastSignature = null;
+    let currentActivityLogs = []; // <-- Variabel baru untuk menyimpan data notifikasi saat ini
+
+    async function loadUnreadCount() {
+        try {
+            const response = await fetch('/api/activitylog/unread-count', { credentials: 'include' });
+            if (!response.ok) return null;
+            const result = await response.json();
+            if (result?.success) {
+                const unreadCount = Number(result.unreadCount) || 0;
+                updateBadgeCount(unreadCount);
+                return unreadCount;
+            }
+        } catch (error) {
+            console.warn('Gagal memuat jumlah notifikasi:', error);
+        }
+        return null;
+    }
+
+    async function replaceNotificationItemIds(logs) {
+        if (!Array.isArray(logs)) return logs;
+
+        try {
+            if (!notificationItemNames) {
+                const response = await fetch('/api/kelolabarang', { credentials: 'include' });
+                const result = await response.json();
+                const items = Array.isArray(result) ? result : (result.data || []);
+                notificationItemNames = new Map(items.map(item => [
+                    String(item.id ?? item.Id), item.namaBarang ?? item.NamaBarang
+                ]));
+            }
+
+            return logs.map(log => {
+                const target = log.target ?? log.Target ?? '';
+                const detail = log.detail ?? log.Detail ?? '';
+                if (!target.toLowerCase().includes('barang')) return log;
+
+                const updatedDetail = detail.replace(/\bID\s*(\d+)\b/gi, (match, id) =>
+                    notificationItemNames.get(String(id)) || match);
+                return { ...log, detail: updatedDetail, Detail: updatedDetail };
+            });
+        } catch (error) {
+            console.warn('Nama barang pada notifikasi gagal dimuat:', error);
+            return logs;
+        }
+    }
+
+    async function loadActivityLogs() {
+        try {
+            const response = await fetch('/api/activitylog?limit=25', { credentials: 'include' });
+            if (!response.ok) return null;
+            const result = await response.json();
+            const logs = Array.isArray(result) ? result : (result.data || []);
+            
+            currentActivityLogs = logs; // <-- Simpan log ke variabel untuk difilter nanti saat dihapus
+
+            const displayLogs = await replaceNotificationItemIds(logs);
+            renderNotificationList(displayLogs);
+            return logs;
+        } catch (error) {
+            console.warn('Gagal memuat log aktivitas:', error);
+        }
+        return null;
+    }
+
+    function getNotificationSignature(logs, unreadCount) {
+        const latest = Array.isArray(logs) && logs.length ? logs[0] : null;
+        const latestId = latest?.id ?? latest?.Id ?? 0;
+        const latestTime = latest?.waktu ?? latest?.Waktu ?? '';
+        return `${latestId}|${latestTime}|${Number(unreadCount) || 0}|${logs?.length || 0}`;
+    }
+
+    async function refreshNotificationState(notifyPageOnChange = false) {
+        const [unreadCount, logs] = await Promise.all([loadUnreadCount(), loadActivityLogs()]);
+        if (unreadCount === null || logs === null) return false;
+
+        const signature = getNotificationSignature(logs, unreadCount);
+        const changed = notificationLastSignature !== null && notificationLastSignature !== signature;
+        notificationLastSignature = signature;
+
+        if (changed && notifyPageOnChange) {
+            window.dispatchEvent(new CustomEvent('sigma:notification'));
+        }
+        return changed;
+    }
+
+    window.refreshSigmaNotifications = () => refreshNotificationState(true);
+
+    function updateBadgeCount(count) {
+        const badge = document.getElementById('notifUnreadBadge') || document.getElementById('notif-badge');
+        const header = document.getElementById('notifHeaderCount') || document.getElementById('notif-badge-count');
+        const total = Number(count) || 0;
+        if (badge) {
+            badge.textContent = total > 99 ? '99+' : total;
+            badge.style.display = total ? 'inline-block' : 'none';
+            badge.classList.toggle('d-none', !total);
+        }
+        if (header) header.textContent = `${total} Baru`;
+    }
+
+    function renderNotificationList(logs) {
+        const container = document.getElementById('notif-list-container');
+        const footer = document.getElementById('notif-footer-action');
+        if (!container) return;
+
+        if (!logs?.length) {
+            container.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-bell-slash fs-4 d-block mb-1 opacity-50"></i>Tidak ada aktivitas terbaru</div>';
+            footer?.classList.add('d-none');
+            footer?.classList.remove('d-flex');
+            updateBadgeCount(0);
+            return;
+        }
+
+        footer?.classList.remove('d-none');
+        footer?.classList.add('d-flex');
+        container.innerHTML = logs.map(log => {
+            const id = log.id ?? log.Id;
+            const aksi = log.aksi ?? log.Aksi ?? 'Aktivitas';
+            const target = log.target ?? log.Target ?? '';
+            const detail = log.detail ?? log.Detail ?? 'Aksi sistem tercatat.';
+            const actorDisplay = log.actorDisplay ?? log.ActorDisplay ?? 'System';
+            const role = log.role ?? log.Role ?? '';
+            const isRead = Boolean(log.isRead ?? log.IsRead);
+            const notificationUrl = getNotificationUrl(target, detail);
+            const rawTime = log.waktu ?? log.Waktu;
+            const tone = getNotificationTone(`${aksi} ${target} ${detail}`);
+            const icon = getNotificationIcon(`${aksi} ${target} ${detail}`);
+            const itemStateClass = isRead ? 'notif-item-read' : 'notif-item-unread';
+            const titleClass = isRead ? 'notif-title-read' : 'notif-title-unread';
+            const newBadge = isRead ? '' : '<span class="notif-badge-new">Baru</span>';
+
+            return `<article class="notif-item-custom ${itemStateClass}" role="option" aria-label="${isRead ? 'Sudah dibaca' : 'Belum dibaca'}">
+                <button type="button" class="notif-item-open" onclick="markAsReadAndAct(${Number(id)}, '${notificationUrl}')">
+                    <span class="notif-item-icon notif-tone-${tone}"><i class="bi ${icon}"></i></span>
+                    <span class="notif-item-body">
+                        <span class="notif-item-heading"><span class="${titleClass}">${escapeHtml(aksi)}${target ? ` · ${escapeHtml(target)}` : ''}</span>${newBadge}</span>
+                        <span class="notif-item-meta"><span><i class="bi bi-person-circle"></i>${escapeHtml(actorDisplay)}</span><span class="notif-role">${escapeHtml(role || 'User')}</span></span>
+                        <span class="notif-item-detail">${escapeHtml(detail)}</span>
+                        <span class="notif-time-ago" data-time="${escapeHtml(rawTime)}"><i class="bi bi-clock"></i>${escapeHtml(formatTimeAgo(rawTime))}</span>
+                    </span>
+                </button>
+                <button type="button" class="notif-delete-btn" title="Hapus notifikasi" aria-label="Hapus notifikasi" onclick="deleteNotification(event, ${Number(id)})"><i class="bi bi-x-lg"></i></button>
+            </article>`;
+        }).join('');
+    }
+
+    function getNotificationTone(value) {
+        const text = String(value || '').toLowerCase();
+        if (/(terlambat|ditolak|menolak|tolak|gagal|dihapus|menghapus|hapus|rusak)/.test(text)) return 'danger';
+        if (/(disetujui|menyetujui|setujui|memvalidasi|berhasil|selesai|dikembalikan|kembali)/.test(text)) return 'success';
+        if (/(menunggu|pending|peringatan|jatuh tempo)/.test(text)) return 'warning';
+        return 'info';
+    }
+
+    function getNotificationIcon(value) {
+        const text = String(value || '').toLowerCase();
+        if (/(rusak|gagal|ditolak|dihapus|hapus)/.test(text)) return 'bi-exclamation-triangle-fill';
+        if (/(disetujui|berhasil|selesai|kembali)/.test(text)) return 'bi-check-circle-fill';
+        if (/(peminjaman|dipinjam|dikeluarkan)/.test(text)) return 'bi-arrow-left-right';
+        if (/(masuk|menambahkan|dibuat)/.test(text)) return 'bi-box-arrow-in-down';
+        if (/(keluar|mengeluarkan)/.test(text)) return 'bi-box-arrow-up';
+        if (/(laporan|pdf)/.test(text)) return 'bi-file-earmark-text-fill';
+        return 'bi-info-circle-fill';
+    }
+
+    function getNotificationUrl(target, detail) {
+        const value = String(target || '').toLowerCase();
+        const textDetail = String(detail || '').toLowerCase();
+        const combined = value + ' ' + textDetail;
+
+        if (combined.includes('validasi') || combined.includes('menyetujui barang') || combined.includes('pending validasi')) {
+            return '/Perangkat/Validasi';
+        }
+        if (combined.includes('arsip')) {
+            if (combined.includes('opname')) return '/Opname/Arsip';
+            return 'arsip.html';
+        }
+        if (combined.includes('cetak laporan') || combined.includes('laporan')) {
+            return 'laporan.html';
+        }
+        if (combined.includes('masuk')) {
+            return '/KelolaBarang/Masuk';
+        }
+        if (combined.includes('keluar')) {
+            return '/KelolaBarang/Keluar';
+        }
+        if (combined.includes('kategori')) {
+            return '/KelolaBarang/Kategori';
+        }
+        if (combined.includes('lokasi') || combined.includes('rak')) {
+            return '/KelolaBarang/Rak';
+        }
+        if (value.includes('peminjaman')) return 'peminjaman.html';
+        if (value.includes('perangkat')) return '/Perangkat/Index';
+        if (value.includes('vendor')) return 'vendor.html';
+        if (value.includes('user')) return 'pengguna.html';
+        if (value.includes('opname')) return 'opname.html';
+        if (value.includes('barang')) return 'inventaris.html';
+        if (value.includes('profil')) return 'profil.html';
+
+        return 'dashboard.html';
+    }
+
+    async function markAsReadAndAct(id, url) {
+        try {
+            await fetch(`/api/activitylog/${id}/read`, { method: 'PUT', credentials: 'include' });
+            await loadUnreadCount();
+        } catch (error) {
+            console.error('Gagal menandai dibaca:', error);
+        } finally {
+            window.location.href = url || 'dashboard.html';
+        }
+    }
+
+    async function markAllAsRead() {
+        try {
+            const response = await fetch('/api/activitylog/read-all', { method: 'PUT', credentials: 'include' });
+            if (response.ok) { await loadUnreadCount(); await loadActivityLogs(); }
+        } catch (error) { console.error('Gagal menandai semua dibaca:', error); }
+    }
+
+    async function deleteNotification(event, id) {
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+            const response = await fetch(`/api/activitylog/${id}`, { method: 'DELETE', credentials: 'include' });
+            if (response.ok) { await loadUnreadCount(); await loadActivityLogs(); }
+        } catch (error) { console.error('Gagal menghapus notifikasi:', error); }
+    }
+
+    // --- FUNGSI BARU: Hanya Menghapus Notifikasi yang Terbaca ---
+    async function clearReadNotifications() {
+        try {
+            // Ambil hanya notifikasi yang isRead == true
+            const readLogs = currentActivityLogs.filter(log => log.isRead || log.IsRead);
+            
+            if (readLogs.length === 0) {
+                // Opsional: Jika tidak ada yang terbaca, abaikan saja (atau bisa tambah Toast Notif)
+                return;
+            }
+
+            // Hapus secara paralel menggunakan endpoint DELETE by ID yang sudah Anda miliki
+            const deletePromises = readLogs.map(log => {
+                const id = log.id ?? log.Id;
+                return fetch(`/api/activitylog/${id}`, { method: 'DELETE', credentials: 'include' });
+            });
+
+            await Promise.all(deletePromises);
+            
+            // Perbarui antarmuka
+            await loadUnreadCount();
+            await loadActivityLogs();
+        } catch (error) {
+            console.error('Gagal membersihkan notifikasi terbaca:', error);
+        }
+    }
+    // -------------------------------------------------------------
+
+    function setupNotificationEvents() {
+        document.getElementById('btnMarkAllRead')?.addEventListener('click', event => {
+            event.preventDefault();
+            markAllAsRead();
+        });
+        document.getElementById('btnClearAllNotif')?.addEventListener('click', event => {
+            event.preventDefault();
+            clearReadNotifications(); // <- Pastikan menunjuk ke fungsi baru
+        });
+    }
+
+    function formatTimeAgo(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (seconds < 60) return 'Baru saja';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} mnt lalu`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} jam lalu`;
+        return `${Math.floor(hours / 24)} hari lalu`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+
+    setInterval(() => {
+        const timeElements = document.querySelectorAll('.notif-time-ago');
+        timeElements.forEach(el => {
+            const rawTime = el.getAttribute('data-time');
+            if (rawTime) {
+                el.innerHTML = `<i class="bi bi-clock me-1"></i>${escapeHtml(formatTimeAgo(rawTime))}`;
+            }
+        });
+    }, 30000);
+
+    function resolveNotificationHubUrl() {
+        try {
+            const hubUrl = new URL(window.BACKEND_BASE_URL || window.location.origin, window.location.origin);
+
+            hubUrl.pathname = '/notificationHub';
+            hubUrl.search = '';
+            hubUrl.hash = '';
+            return hubUrl.toString();
+        } catch (error) {
+            console.warn('URL SignalR tidak valid, memakai origin aplikasi.', error);
+            return `${window.location.origin}/notificationHub`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        refreshNotificationState(false);
+        setupNotificationEvents();
+
+        // Fallback sinkronisasi menjaga notifikasi tetap terbarui jika SignalR
+        // terputus, tab baru aktif kembali, atau jaringan sempat berpindah.
+        window.setInterval(() => {
+            if (!document.hidden) refreshNotificationState(true);
+        }, 5000);
+        window.addEventListener('focus', () => refreshNotificationState(true));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshNotificationState(true);
+        });
+
+        if (typeof signalR === 'undefined') {
+            return;
+        }
+
+        window.notificationConnection = new signalR.HubConnectionBuilder()
+            .withUrl(resolveNotificationHubUrl(), { withCredentials: true })
+            .withAutomaticReconnect([0, 2000, 5000, 10000])
+            .build();
+
+        window.notificationConnection.on('ReceiveNotification', async function () {
+            await refreshNotificationState(false);
+            window.dispatchEvent(new CustomEvent('sigma:notification'));
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: 'Ada aktivitas atau notifikasi baru!',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true,
+                    customClass: { popup: 'rounded-4 shadow-sm' }
+                });
+            }
+        });
+
+        window.notificationConnection.onreconnected(() => refreshNotificationState(true));
+
+        window.notificationConnection.start()
+            .then(function () { console.log('SignalR Connected'); })
+            .catch(function (error) { console.warn('SignalR error:', error.toString()); });
+    });
+</script>
+
+                                                        <button type="button" id="logoutButton" class="sigma-logout" title="Keluar dari aplikasi">
+                                                            <i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline">Keluar</span>
+                                                        </button>
+                                                    </div>
+                                                </header>
+
+                                                <section class="sigma-hero" aria-label="Identitas halaman">
+                                                    <div class="sigma-hero-content">
+                                                        <span class="sigma-hero-kicker">Sistem Informasi Gudang &amp; Manajemen Aset</span>
+                                                        <h1>Kelola Vendor</h1>
+                                                        <nav aria-label="breadcrumb">
+                                                            <ol class="breadcrumb mb-0">
+                                                                <li class="breadcrumb-item"><a href="dashboard.html">SIGMA</a></li>
+                                                                <li class="breadcrumb-item active" aria-current="page">Kelola Vendor</li>
+                                                            </ol>
+                                                        </nav>
+                                                    </div>
+                                                </section>
+                                            </div>
+
+                                            <main class="app-content animate-fade-in">
+<div class="vendor-page animate-fade-in">
+    <section class="vendor-hero-card" aria-labelledby="vendorPageTitle">
+        <div class="vendor-heading">
+            <div class="vendor-heading-icon" aria-hidden="true"><i class="bi bi-buildings-fill"></i></div>
+            <div>
+                <h2 id="vendorPageTitle">Manajemen Vendor</h2>
+                <p>Kelola mitra dan perusahaan pemasok SIGMA secara ringkas.</p>
+            </div>
+        </div>
+        <form id="formTambahVendor" class="vendor-create-form">
+            <div class="vendor-create-field">
+                <label for="inputNamaVendor">Nama Vendor / PT <span class="text-danger">*</span></label>
+                <input type="text" id="inputNamaVendor" class="form-control" placeholder="Masukkan nama vendor..." required autocomplete="off" />
+            </div>
+            <a href="dashboard.html" class="btn btn-light border"><i class="bi bi-arrow-left"></i> Kembali</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tambah Vendor</button>
+        </form>
+    </section>
+
+    <section class="vendor-directory-card" aria-labelledby="vendorDirectoryTitle">
+        <div class="vendor-directory-header">
+            <div class="vendor-directory-title">
+                <h3 id="vendorDirectoryTitle">Daftar Vendor Terdaftar</h3>
+                <p>Ditampilkan dalam kartu ringkas agar mudah dipindai dan tidak memanjang.</p>
+            </div>
+            <span id="vendorTotal" class="vendor-total">0 vendor</span>
+        </div>
+        <div class="vendor-toolbar">
+            <form id="searchForm" class="vendor-search-shell" role="search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search" id="searchString" placeholder="Cari nama vendor..." aria-label="Cari vendor" />
+                <button type="button" id="btnResetSearch" class="btn btn-light border d-none" title="Bersihkan pencarian"><i class="bi bi-x-lg"></i></button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Cari</button>
+            </form>
+        </div>
+        <div id="vendorGrid" class="vendor-grid" aria-live="polite">
+            <div class="vendor-empty"><span class="spinner-border spinner-border-sm"></span><span>Memuat data vendor...</span></div>
+        </div>
+        <nav id="vendorPagination" class="vendor-pagination" aria-label="Navigasi daftar vendor"></nav>
+    </section>
+</div>
+
+</main>
+                                            <footer class="app-footer">
+                                                <span>&copy; 2026 PT Pertamina Trans Kontinental</span>
+                                                <span>SIGMA · Sistem Gudang ICT</span>
+                                            </footer>
+                                        </div>
+
+                                        
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/jquery/dist/jquery.min.js"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.all.min.js"></script>
+                                        
+                                        <script>window.API_BASE_URL = ''; window.BACKEND_BASE_URL = ''; window.SIGMA_STATIC_EXPORT = true;</script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/js/api-client.js?v=VmawJtYgT8DM_CVgCqrRyAbyP1OoJe-s2b66bTLWmRk"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/js/site.js?v=zF6NDiibaizjDt2XcNPENQN0lf_ImkqqXcaf0idTqgo"></script>
+                                        
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.min.css">
+    <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.all.min.js"></script>
+    <script>
+        window.API_BASE_URL = '';
+        let vendorCache = new Map();
+        let vendorItems = [];
+        let vendorPage = 1;
+        const vendorPageSize = 8;
+        let vendorSearchTimer = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadVendorData();
+            document.getElementById('formTambahVendor').addEventListener('submit', handleAddVendor);
+            document.getElementById('searchForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                vendorPage = 1;
+                loadVendorData();
+            });
+            document.getElementById('btnResetSearch').addEventListener('click', function () {
+                document.getElementById('searchString').value = '';
+                vendorPage = 1;
+                loadVendorData();
+            });
+            document.getElementById('searchString').addEventListener('input', function () {
+                window.clearTimeout(vendorSearchTimer);
+                vendorSearchTimer = window.setTimeout(function () {
+                    vendorPage = 1;
+                    loadVendorData();
+                }, 300);
+            });
+            document.getElementById('vendorGrid').addEventListener('click', function (event) {
+                const button = event.target.closest('[data-vendor-action]');
+                if (!button) return;
+                const vendorId = Number(button.dataset.vendorId);
+                if (button.dataset.vendorAction === 'edit') editVendor(vendorId);
+                if (button.dataset.vendorAction === 'delete') konfirmasiHapusVendor(vendorId);
+            });
+            document.getElementById('vendorPagination').addEventListener('click', function (event) {
+                const button = event.target.closest('[data-vendor-page]');
+                if (!button || button.disabled) return;
+                vendorPage = Number(button.dataset.vendorPage);
+                renderVendorGrid();
+            });
+        });
+
+        async function handleAddVendor(event) {
+            event.preventDefault();
+            const input = document.getElementById('inputNamaVendor');
+            const namaVendor = input.value.trim();
+            if (!namaVendor) {
+                Swal.fire('Perhatian', 'Nama vendor tidak boleh kosong.', 'warning');
+                return;
+            }
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ NamaVendor: namaVendor }), credentials: 'include'
+                });
+                if (response.status === 401) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal menambahkan vendor.');
+                input.value = '';
+                await Swal.fire({ title: 'Berhasil!', text: result.message || 'Vendor berhasil ditambahkan.', icon: 'success', timer: 1400, showConfirmButton: false });
+                vendorPage = 1;
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message || 'Tidak dapat terhubung ke server backend.', 'error');
+            }
+        }
+
+        async function loadVendorData() {
+            const searchString = document.getElementById('searchString').value.trim();
+            document.getElementById('btnResetSearch').classList.toggle('d-none', !searchString);
+            const params = new URLSearchParams();
+            if (searchString) params.append('searchString', searchString);
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor?${params.toString()}`, { credentials: 'include' });
+                if (response.status === 401) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                if (!response.ok) throw new Error('Gagal memuat data vendor.');
+                const payload = await response.json();
+                const allItems = Array.isArray(payload) ? payload : (payload.data || payload.vendors || []);
+                vendorItems = searchString
+                    ? allItems.filter(item => (item.namaVendor || item.NamaVendor || '').toLowerCase().includes(searchString.toLowerCase()))
+                    : allItems;
+                vendorCache = new Map(allItems.map(item => [Number(item.id || item.Id), item]));
+                document.getElementById('vendorTotal').textContent = `${vendorItems.length} vendor`;
+                vendorPage = Math.min(vendorPage, Math.max(1, Math.ceil(vendorItems.length / vendorPageSize)));
+                renderVendorGrid();
+            } catch (error) {
+                console.error('Gagal memuat data vendor:', error);
+                document.getElementById('vendorGrid').innerHTML = '<div class="vendor-empty text-danger"><i class="bi bi-wifi-off"></i><strong>Gagal terhubung ke server backend.</strong></div>';
+                document.getElementById('vendorPagination').innerHTML = '';
+            }
+        }
+
+        function renderVendorGrid() {
+            const grid = document.getElementById('vendorGrid');
+            if (!vendorItems.length) {
+                grid.innerHTML = '<div class="vendor-empty"><i class="bi bi-buildings"></i><strong>Belum ada vendor yang cocok.</strong><span>Coba kata kunci lain atau tambahkan vendor baru.</span></div>';
+                renderVendorPagination(0);
+                return;
+            }
+            const startIndex = (vendorPage - 1) * vendorPageSize;
+            grid.innerHTML = vendorItems.slice(startIndex, startIndex + vendorPageSize).map((vendor, localIndex) => {
+                const id = Number(vendor.id || vendor.Id);
+                const name = escapeHtml(vendor.namaVendor || vendor.NamaVendor || '-');
+                return `<article class="vendor-card">
+                    <div class="vendor-card-icon"><i class="bi bi-building"></i></div>
+                    <div class="vendor-card-copy"><small>Vendor ${startIndex + localIndex + 1}</small><strong title="${name}">${name}</strong></div>
+                    <div class="vendor-card-actions">
+                        <button type="button" class="btn btn-outline-primary" data-vendor-action="edit" data-vendor-id="${id}"><i class="bi bi-pencil-square"></i> Edit</button>
+                        <button type="button" class="btn btn-outline-danger" data-vendor-action="delete" data-vendor-id="${id}"><i class="bi bi-trash"></i> Hapus</button>
+                    </div>
+                </article>`;
+            }).join('');
+            renderVendorPagination(Math.ceil(vendorItems.length / vendorPageSize));
+        }
+
+        function renderVendorPagination(totalPages) {
+            const nav = document.getElementById('vendorPagination');
+            if (totalPages <= 1) {
+                nav.innerHTML = '';
+                return;
+            }
+            const firstPage = Math.max(1, Math.min(vendorPage - 2, Math.max(1, totalPages - 4)));
+            const lastPage = Math.min(totalPages, firstPage + 4);
+            let html = `<button type="button" data-vendor-page="${Math.max(1, vendorPage - 1)}" ${vendorPage === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            for (let page = firstPage; page <= lastPage; page += 1) {
+                html += `<button type="button" data-vendor-page="${page}" class="${page === vendorPage ? 'active' : ''}">${page}</button>`;
+            }
+            html += `<button type="button" data-vendor-page="${Math.min(totalPages, vendorPage + 1)}" ${vendorPage === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            nav.innerHTML = html;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            })[character]);
+        }
+
+        async function editVendor(vendorId) {
+            const vendor = vendorCache.get(Number(vendorId));
+            if (!vendor) return;
+            const currentName = vendor.namaVendor || vendor.NamaVendor || '';
+            const prompt = await Swal.fire({
+                title: 'Edit Vendor', input: 'text', inputValue: currentName,
+                inputLabel: 'Nama Vendor / PT', showCancelButton: true,
+                confirmButtonText: 'Simpan perubahan', cancelButtonText: 'Batal', confirmButtonColor: '#0753a6',
+                inputValidator: value => !value.trim() ? 'Nama vendor wajib diisi.' : undefined
+            });
+            if (!prompt.isConfirmed) return;
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor/${vendorId}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', body: JSON.stringify({ NamaVendor: prompt.value.trim() })
+                });
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal memperbarui vendor.');
+                await Swal.fire({ title: 'Berhasil!', text: result.message || 'Vendor diperbarui.', icon: 'success', timer: 1300, showConfirmButton: false });
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message, 'error');
+            }
+        }
+
+        async function konfirmasiHapusVendor(vendorId) {
+            const vendor = vendorCache.get(Number(vendorId));
+            const vendorName = vendor?.namaVendor || vendor?.NamaVendor || 'Vendor';
+            const confirmation = await Swal.fire({
+                title: 'Yakin Ingin Menghapus?', text: `Data vendor "${vendorName}" akan dihapus secara permanen dari sistem.`,
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#ED1B24', cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal'
+            });
+            if (!confirmation.isConfirmed) return;
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/vendor/${vendorId}`, { method: 'DELETE', credentials: 'include' });
+                const result = await response.json().catch(() => ({ success: response.ok }));
+                if (!response.ok || result.success === false) throw new Error(result.message || 'Gagal menghapus vendor.');
+                await Swal.fire({ title: 'Terhapus!', text: result.message || 'Vendor berhasil dihapus.', icon: 'success', timer: 1400, showConfirmButton: false });
+                loadVendorData();
+            } catch (error) {
+                Swal.fire('Gagal!', error.message || 'Tidak dapat terhubung ke server backend.', 'error');
+            }
+        }
+    </script>
+
+                                    </body>
+
+                                </html>

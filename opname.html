@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#063b79" />
+    <title>Stock Opname &amp; Audit Gudang - SIGMA - PTK.SIGMA</title>
+
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/lib/fonts/inter/inter-300-700.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/css/bootstrap-icons-fix.css" />
+    <link rel="stylesheet" href="Frontend/PTK.SIGMA.Web/wwwroot/css/site.css?v=bYSUl9WKXSt9eVUpnwTfG0AtLhJNY0OCnhAI3aJ4lDQ" />
+    
+
+    <!-- CSS CUSTOM UNTUK MERAPIKAN PROFIL & HEADER -->
+    <style>
+            /* Logo Topbar Statis */
+            .topbar-logo-link:hover,
+            .topbar-logo-link:focus,
+            .topbar-logo-link:active,
+            .topbar-logo:hover {
+                transform: none !important;
+                animation: none !important;
+                box-shadow: none !important;
+            }
+
+            /* 
+             * PROFIL USER MINIMALIS & ELEGAN (Tanpa Kotak)
+             */
+            .sidebar-user-profile {
+                padding: 10px 20px 25px;
+                margin-bottom: 15px;
+                text-align: center;
+                position: relative;
+            }
+
+            /* Garis bawah gradien halus sebagai pemisah, bukan kotak */
+            .sidebar-user-profile::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 15%;
+                width: 70%;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            }
+
+            /* Role Akses (Di Atas, Besar, Menonjol) */
+            .sidebar-role-text {
+                color: #ffffff;
+                font-size: 1.35rem;
+                font-weight: 800;
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+                margin-bottom: 6px;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                display: block;
+            }
+
+            /* Nama User (Di Bawah, Lebih Kecil, Rapi) */
+            .sidebar-name-text {
+                color: rgba(255, 255, 255, 0.75);
+                font-size: 0.95rem;
+                font-weight: 400;
+                display: block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 0 10px;
+            }
+
+            /* Area Tombol Close Sidebar (Hanya untuk Mobile) */
+            .sidebar-header-mobile {
+                display: flex;
+                justify-content: flex-end;
+                padding: 15px 15px 0 15px;
+            }
+    </style>
+    <script src="static-api.js"></script>
+</head>
+
+<body class="app-body page-opname page-opname-index" data-controller="opname" data-action="index">
+      
+    <aside class="offcanvas offcanvas-start app-sidebar" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarTitle"
+           data-bs-scroll="true">
+           
+        <!-- Tombol Close (Hanya muncul di layar kecil/mobile) -->
+        <div class="sidebar-header-mobile d-lg-none">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                    aria-label="Tutup menu"></button>
+        </div>
+
+        <!-- Profil Pengguna Minimalis (Role di atas, Nama di bawah) -->
+        <div class="sidebar-user-profile">
+            <!-- ID "sidebarRole" dipertahankan agar script Anda tetap bisa mengisi datanya -->
+            <div id="sidebarRole" class="sidebar-role-text">Memuat akses...</div>
+            
+            <!-- ID "sidebarUsername" dipertahankan -->
+            <div id="sidebarUsername" class="sidebar-name-text" title="Memuat pengguna...">Memuat pengguna...</div>
+        </div>
+
+        <nav class="sidebar-navigation" aria-labelledby="sidebarTitle">
+            <div id="sidebarTitle" class="sidebar-section-label">Menu Utama</div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="dashboard" href="dashboard.html"><i
+                    class="bi bi-grid-1x2-fill sidebar-icon"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="archive"
+                                            href="arsip.html"><i class="bi bi-archive-fill sidebar-icon"></i><span>Arsip
+                        Inventaris</span></a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="reports"
+                                                href="laporan.html"><i
+                            class="bi bi-file-earmark-pdf-fill sidebar-icon"></i><span>Laporan &amp; PDF</span></a></li>
+
+                            <li class="sidebar-section-label sidebar-section-spacer">Operasional</li>
+                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="inventory"
+                                                    href="inventaris.html"><i class="bi bi-box-seam-fill sidebar-icon"></i><span>Manajemen
+                                Inventaris</span></a></li>
+                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="loans"
+                                                        href="peminjaman.html"><i class="bi bi-arrow-left-right sidebar-icon"></i><span>Sirkulasi
+                                    Peminjaman</span></a></li>
+                                    <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="stocktake"
+                                                            href="opname.html"><i class="bi bi-clipboard2-check-fill sidebar-icon"></i><span class="nav-label">Stock
+                                        Opname</span><span id="opnameReminderBadge" class="opname-reminder-badge d-none" title="Stock opname bulan ini belum lengkap" aria-label="Stock opname bulan ini belum lengkap">!</span></a></li>
+
+                                        <li class="sidebar-section-label sidebar-section-spacer">Administrasi</li>
+                                        <li class="nav-item admin-only-menu"><a class="nav-link nav-link-custom" data-nav-key="users"
+                                                                                href="pengguna.html"><i class="bi bi-people-fill sidebar-icon"></i><span>Manajemen
+                                            Pengguna</span></a></li>
+                                            <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="vendors" href="vendor.html"><i
+                                                class="bi bi-buildings-fill sidebar-icon"></i><span>Manajemen Vendor</span></a></li>
+                                                <li class="nav-item"><a class="nav-link nav-link-custom" data-nav-key="profile" href="profil.html"><i
+                                                    class="bi bi-person-gear sidebar-icon"></i><span>Pengaturan Akun</span></a></li>
+                                                </ul>
+                                            </nav>
+
+                                            <div class="sidebar-footer">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span><strong>PTK SIGMA</strong><small>Inventory Management</small></span>
+                                            </div>
+                                        </aside>
+
+                                        <div class="app-shell">
+                                            <div class="sigma-header-scene">
+                                                <header class="sigma-navbar">
+            
+                                                    <!-- Tombol Hamburger -->
+                                                    <button class="sigma-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"
+                                                            aria-controls="sidebarMenu" aria-label="Buka menu">
+                                                        <i class="bi bi-list"></i>
+                                                    </button>
+            
+                                                    <!-- Posisi Logo di Header -->
+                                                    <a href="dashboard.html" class="topbar-logo-link" aria-label="SIGMA Dashboard">
+                                                        <img src="Frontend/PTK.SIGMA.Web/wwwroot/assets/logo-white.png" alt="PT Pertamina Trans Kontinental" class="topbar-logo" />
+                                                    </a>
+
+                                                    <div class="topbar-actions">
+                                                        
+<!-- PERBAIKAN: style item notifikasi unread (background tint + garis aksen kiri + label "Baru").
+     Idealnya style ini dipindahkan ke stylesheet utama, ditaruh di sini dulu supaya langsung terlihat. -->
+<style>
+    .notif-title-unread {
+        font-weight: 800;
+        color: #173a5f;
+    }
+
+    .notif-title-read {
+        font-weight: 650;
+        color: #4a6079;
+    }
+
+    .notif-badge-new {
+        font-size: .58rem;
+        font-weight: 800;
+        color: #fff;
+        background: linear-gradient(135deg, #0d6efd, #2b8cff);
+        padding: .23rem .52rem;
+        border-radius: 999px;
+        letter-spacing: .02em;
+    }
+</style>
+
+<div class="dropdown">
+    <!-- PERBAIKAN: Menambahkan position-relative agar badge tidak lari ke ujung layar -->
+    <a class="nav-link position-relative dropdown-toggle no-arrow notif-bell-toggle d-flex align-items-center justify-content-center text-white"
+       href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false"
+       id="notifDropdownToggle" title="Notifikasi aktivitas">
+        <i class="bi bi-bell-fill"></i>
+        <!-- PERBAIKAN: Posisi badge dibuat lebih pas ke dalam agar tidak terpotong tepi layar -->
+        <span id="notif-badge" class="position-absolute badge rounded-pill notif-unread-badge d-none"
+              style="top: 0; right: -2px; transform: translate(25%, -25%);">0</span>
+    </a>
+
+    <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu mt-2" aria-labelledby="notifDropdownToggle">
+        <div class="notif-header">
+            <div class="notif-header-main">
+                <div class="notif-header-icon"><i class="bi bi-bell-fill"></i></div>
+                <div>
+                    <strong class="notif-header-title">Notifikasi Aktivitas</strong>
+                    <span class="notif-header-subtitle">Pembaruan terbaru dari sistem</span>
+                </div>
+            </div>
+            <span id="notif-badge-count" class="notif-count-pill">0 Baru</span>
+        </div>
+
+        <!-- CONTAINER -->
+        <div id="notif-list-container">
+            <div class="text-center py-5 text-muted small">
+                <div class="spinner-border spinner-border-sm notif-spinner me-2" role="status"></div>
+                Memuat notifikasi...
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div id="notif-footer-action" class="d-none notif-footer justify-content-between align-items-center">
+            <!-- MENGUBAH TEKS DAN FUNGSI TOMBOL HAPUS -->
+            <button type="button" class="notif-action-btn text-secondary border-0 bg-transparent"
+                    onclick="clearReadNotifications()" title="Hapus notifikasi yang sudah dibaca">
+                <i class="bi bi-trash3 me-1"></i> Hapus Terbaca
+            </button>
+            <button type="button" class="notif-action-btn text-primary border-0 bg-transparent"
+                    onclick="markAllAsRead()">
+                <i class="bi bi-check2-all me-1"></i> Tandai dibaca
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+    window.API_BASE_URL = '';
+    window.BACKEND_BASE_URL = '';
+
+    let notificationItemNames;
+    let notificationLastSignature = null;
+    let currentActivityLogs = []; // <-- Variabel baru untuk menyimpan data notifikasi saat ini
+
+    async function loadUnreadCount() {
+        try {
+            const response = await fetch('/api/activitylog/unread-count', { credentials: 'include' });
+            if (!response.ok) return null;
+            const result = await response.json();
+            if (result?.success) {
+                const unreadCount = Number(result.unreadCount) || 0;
+                updateBadgeCount(unreadCount);
+                return unreadCount;
+            }
+        } catch (error) {
+            console.warn('Gagal memuat jumlah notifikasi:', error);
+        }
+        return null;
+    }
+
+    async function replaceNotificationItemIds(logs) {
+        if (!Array.isArray(logs)) return logs;
+
+        try {
+            if (!notificationItemNames) {
+                const response = await fetch('/api/kelolabarang', { credentials: 'include' });
+                const result = await response.json();
+                const items = Array.isArray(result) ? result : (result.data || []);
+                notificationItemNames = new Map(items.map(item => [
+                    String(item.id ?? item.Id), item.namaBarang ?? item.NamaBarang
+                ]));
+            }
+
+            return logs.map(log => {
+                const target = log.target ?? log.Target ?? '';
+                const detail = log.detail ?? log.Detail ?? '';
+                if (!target.toLowerCase().includes('barang')) return log;
+
+                const updatedDetail = detail.replace(/\bID\s*(\d+)\b/gi, (match, id) =>
+                    notificationItemNames.get(String(id)) || match);
+                return { ...log, detail: updatedDetail, Detail: updatedDetail };
+            });
+        } catch (error) {
+            console.warn('Nama barang pada notifikasi gagal dimuat:', error);
+            return logs;
+        }
+    }
+
+    async function loadActivityLogs() {
+        try {
+            const response = await fetch('/api/activitylog?limit=25', { credentials: 'include' });
+            if (!response.ok) return null;
+            const result = await response.json();
+            const logs = Array.isArray(result) ? result : (result.data || []);
+            
+            currentActivityLogs = logs; // <-- Simpan log ke variabel untuk difilter nanti saat dihapus
+
+            const displayLogs = await replaceNotificationItemIds(logs);
+            renderNotificationList(displayLogs);
+            return logs;
+        } catch (error) {
+            console.warn('Gagal memuat log aktivitas:', error);
+        }
+        return null;
+    }
+
+    function getNotificationSignature(logs, unreadCount) {
+        const latest = Array.isArray(logs) && logs.length ? logs[0] : null;
+        const latestId = latest?.id ?? latest?.Id ?? 0;
+        const latestTime = latest?.waktu ?? latest?.Waktu ?? '';
+        return `${latestId}|${latestTime}|${Number(unreadCount) || 0}|${logs?.length || 0}`;
+    }
+
+    async function refreshNotificationState(notifyPageOnChange = false) {
+        const [unreadCount, logs] = await Promise.all([loadUnreadCount(), loadActivityLogs()]);
+        if (unreadCount === null || logs === null) return false;
+
+        const signature = getNotificationSignature(logs, unreadCount);
+        const changed = notificationLastSignature !== null && notificationLastSignature !== signature;
+        notificationLastSignature = signature;
+
+        if (changed && notifyPageOnChange) {
+            window.dispatchEvent(new CustomEvent('sigma:notification'));
+        }
+        return changed;
+    }
+
+    window.refreshSigmaNotifications = () => refreshNotificationState(true);
+
+    function updateBadgeCount(count) {
+        const badge = document.getElementById('notifUnreadBadge') || document.getElementById('notif-badge');
+        const header = document.getElementById('notifHeaderCount') || document.getElementById('notif-badge-count');
+        const total = Number(count) || 0;
+        if (badge) {
+            badge.textContent = total > 99 ? '99+' : total;
+            badge.style.display = total ? 'inline-block' : 'none';
+            badge.classList.toggle('d-none', !total);
+        }
+        if (header) header.textContent = `${total} Baru`;
+    }
+
+    function renderNotificationList(logs) {
+        const container = document.getElementById('notif-list-container');
+        const footer = document.getElementById('notif-footer-action');
+        if (!container) return;
+
+        if (!logs?.length) {
+            container.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-bell-slash fs-4 d-block mb-1 opacity-50"></i>Tidak ada aktivitas terbaru</div>';
+            footer?.classList.add('d-none');
+            footer?.classList.remove('d-flex');
+            updateBadgeCount(0);
+            return;
+        }
+
+        footer?.classList.remove('d-none');
+        footer?.classList.add('d-flex');
+        container.innerHTML = logs.map(log => {
+            const id = log.id ?? log.Id;
+            const aksi = log.aksi ?? log.Aksi ?? 'Aktivitas';
+            const target = log.target ?? log.Target ?? '';
+            const detail = log.detail ?? log.Detail ?? 'Aksi sistem tercatat.';
+            const actorDisplay = log.actorDisplay ?? log.ActorDisplay ?? 'System';
+            const role = log.role ?? log.Role ?? '';
+            const isRead = Boolean(log.isRead ?? log.IsRead);
+            const notificationUrl = getNotificationUrl(target, detail);
+            const rawTime = log.waktu ?? log.Waktu;
+            const tone = getNotificationTone(`${aksi} ${target} ${detail}`);
+            const icon = getNotificationIcon(`${aksi} ${target} ${detail}`);
+            const itemStateClass = isRead ? 'notif-item-read' : 'notif-item-unread';
+            const titleClass = isRead ? 'notif-title-read' : 'notif-title-unread';
+            const newBadge = isRead ? '' : '<span class="notif-badge-new">Baru</span>';
+
+            return `<article class="notif-item-custom ${itemStateClass}" role="option" aria-label="${isRead ? 'Sudah dibaca' : 'Belum dibaca'}">
+                <button type="button" class="notif-item-open" onclick="markAsReadAndAct(${Number(id)}, '${notificationUrl}')">
+                    <span class="notif-item-icon notif-tone-${tone}"><i class="bi ${icon}"></i></span>
+                    <span class="notif-item-body">
+                        <span class="notif-item-heading"><span class="${titleClass}">${escapeHtml(aksi)}${target ? ` · ${escapeHtml(target)}` : ''}</span>${newBadge}</span>
+                        <span class="notif-item-meta"><span><i class="bi bi-person-circle"></i>${escapeHtml(actorDisplay)}</span><span class="notif-role">${escapeHtml(role || 'User')}</span></span>
+                        <span class="notif-item-detail">${escapeHtml(detail)}</span>
+                        <span class="notif-time-ago" data-time="${escapeHtml(rawTime)}"><i class="bi bi-clock"></i>${escapeHtml(formatTimeAgo(rawTime))}</span>
+                    </span>
+                </button>
+                <button type="button" class="notif-delete-btn" title="Hapus notifikasi" aria-label="Hapus notifikasi" onclick="deleteNotification(event, ${Number(id)})"><i class="bi bi-x-lg"></i></button>
+            </article>`;
+        }).join('');
+    }
+
+    function getNotificationTone(value) {
+        const text = String(value || '').toLowerCase();
+        if (/(terlambat|ditolak|menolak|tolak|gagal|dihapus|menghapus|hapus|rusak)/.test(text)) return 'danger';
+        if (/(disetujui|menyetujui|setujui|memvalidasi|berhasil|selesai|dikembalikan|kembali)/.test(text)) return 'success';
+        if (/(menunggu|pending|peringatan|jatuh tempo)/.test(text)) return 'warning';
+        return 'info';
+    }
+
+    function getNotificationIcon(value) {
+        const text = String(value || '').toLowerCase();
+        if (/(rusak|gagal|ditolak|dihapus|hapus)/.test(text)) return 'bi-exclamation-triangle-fill';
+        if (/(disetujui|berhasil|selesai|kembali)/.test(text)) return 'bi-check-circle-fill';
+        if (/(peminjaman|dipinjam|dikeluarkan)/.test(text)) return 'bi-arrow-left-right';
+        if (/(masuk|menambahkan|dibuat)/.test(text)) return 'bi-box-arrow-in-down';
+        if (/(keluar|mengeluarkan)/.test(text)) return 'bi-box-arrow-up';
+        if (/(laporan|pdf)/.test(text)) return 'bi-file-earmark-text-fill';
+        return 'bi-info-circle-fill';
+    }
+
+    function getNotificationUrl(target, detail) {
+        const value = String(target || '').toLowerCase();
+        const textDetail = String(detail || '').toLowerCase();
+        const combined = value + ' ' + textDetail;
+
+        if (combined.includes('validasi') || combined.includes('menyetujui barang') || combined.includes('pending validasi')) {
+            return '/Perangkat/Validasi';
+        }
+        if (combined.includes('arsip')) {
+            if (combined.includes('opname')) return '/Opname/Arsip';
+            return 'arsip.html';
+        }
+        if (combined.includes('cetak laporan') || combined.includes('laporan')) {
+            return 'laporan.html';
+        }
+        if (combined.includes('masuk')) {
+            return '/KelolaBarang/Masuk';
+        }
+        if (combined.includes('keluar')) {
+            return '/KelolaBarang/Keluar';
+        }
+        if (combined.includes('kategori')) {
+            return '/KelolaBarang/Kategori';
+        }
+        if (combined.includes('lokasi') || combined.includes('rak')) {
+            return '/KelolaBarang/Rak';
+        }
+        if (value.includes('peminjaman')) return 'peminjaman.html';
+        if (value.includes('perangkat')) return '/Perangkat/Index';
+        if (value.includes('vendor')) return 'vendor.html';
+        if (value.includes('user')) return 'pengguna.html';
+        if (value.includes('opname')) return 'opname.html';
+        if (value.includes('barang')) return 'inventaris.html';
+        if (value.includes('profil')) return 'profil.html';
+
+        return 'dashboard.html';
+    }
+
+    async function markAsReadAndAct(id, url) {
+        try {
+            await fetch(`/api/activitylog/${id}/read`, { method: 'PUT', credentials: 'include' });
+            await loadUnreadCount();
+        } catch (error) {
+            console.error('Gagal menandai dibaca:', error);
+        } finally {
+            window.location.href = url || 'dashboard.html';
+        }
+    }
+
+    async function markAllAsRead() {
+        try {
+            const response = await fetch('/api/activitylog/read-all', { method: 'PUT', credentials: 'include' });
+            if (response.ok) { await loadUnreadCount(); await loadActivityLogs(); }
+        } catch (error) { console.error('Gagal menandai semua dibaca:', error); }
+    }
+
+    async function deleteNotification(event, id) {
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+            const response = await fetch(`/api/activitylog/${id}`, { method: 'DELETE', credentials: 'include' });
+            if (response.ok) { await loadUnreadCount(); await loadActivityLogs(); }
+        } catch (error) { console.error('Gagal menghapus notifikasi:', error); }
+    }
+
+    // --- FUNGSI BARU: Hanya Menghapus Notifikasi yang Terbaca ---
+    async function clearReadNotifications() {
+        try {
+            // Ambil hanya notifikasi yang isRead == true
+            const readLogs = currentActivityLogs.filter(log => log.isRead || log.IsRead);
+            
+            if (readLogs.length === 0) {
+                // Opsional: Jika tidak ada yang terbaca, abaikan saja (atau bisa tambah Toast Notif)
+                return;
+            }
+
+            // Hapus secara paralel menggunakan endpoint DELETE by ID yang sudah Anda miliki
+            const deletePromises = readLogs.map(log => {
+                const id = log.id ?? log.Id;
+                return fetch(`/api/activitylog/${id}`, { method: 'DELETE', credentials: 'include' });
+            });
+
+            await Promise.all(deletePromises);
+            
+            // Perbarui antarmuka
+            await loadUnreadCount();
+            await loadActivityLogs();
+        } catch (error) {
+            console.error('Gagal membersihkan notifikasi terbaca:', error);
+        }
+    }
+    // -------------------------------------------------------------
+
+    function setupNotificationEvents() {
+        document.getElementById('btnMarkAllRead')?.addEventListener('click', event => {
+            event.preventDefault();
+            markAllAsRead();
+        });
+        document.getElementById('btnClearAllNotif')?.addEventListener('click', event => {
+            event.preventDefault();
+            clearReadNotifications(); // <- Pastikan menunjuk ke fungsi baru
+        });
+    }
+
+    function formatTimeAgo(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+        if (seconds < 60) return 'Baru saja';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} mnt lalu`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} jam lalu`;
+        return `${Math.floor(hours / 24)} hari lalu`;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    }
+
+    setInterval(() => {
+        const timeElements = document.querySelectorAll('.notif-time-ago');
+        timeElements.forEach(el => {
+            const rawTime = el.getAttribute('data-time');
+            if (rawTime) {
+                el.innerHTML = `<i class="bi bi-clock me-1"></i>${escapeHtml(formatTimeAgo(rawTime))}`;
+            }
+        });
+    }, 30000);
+
+    function resolveNotificationHubUrl() {
+        try {
+            const hubUrl = new URL(window.BACKEND_BASE_URL || window.location.origin, window.location.origin);
+
+            hubUrl.pathname = '/notificationHub';
+            hubUrl.search = '';
+            hubUrl.hash = '';
+            return hubUrl.toString();
+        } catch (error) {
+            console.warn('URL SignalR tidak valid, memakai origin aplikasi.', error);
+            return `${window.location.origin}/notificationHub`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        refreshNotificationState(false);
+        setupNotificationEvents();
+
+        // Fallback sinkronisasi menjaga notifikasi tetap terbarui jika SignalR
+        // terputus, tab baru aktif kembali, atau jaringan sempat berpindah.
+        window.setInterval(() => {
+            if (!document.hidden) refreshNotificationState(true);
+        }, 5000);
+        window.addEventListener('focus', () => refreshNotificationState(true));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshNotificationState(true);
+        });
+
+        if (typeof signalR === 'undefined') {
+            return;
+        }
+
+        window.notificationConnection = new signalR.HubConnectionBuilder()
+            .withUrl(resolveNotificationHubUrl(), { withCredentials: true })
+            .withAutomaticReconnect([0, 2000, 5000, 10000])
+            .build();
+
+        window.notificationConnection.on('ReceiveNotification', async function () {
+            await refreshNotificationState(false);
+            window.dispatchEvent(new CustomEvent('sigma:notification'));
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: 'Ada aktivitas atau notifikasi baru!',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true,
+                    customClass: { popup: 'rounded-4 shadow-sm' }
+                });
+            }
+        });
+
+        window.notificationConnection.onreconnected(() => refreshNotificationState(true));
+
+        window.notificationConnection.start()
+            .then(function () { console.log('SignalR Connected'); })
+            .catch(function (error) { console.warn('SignalR error:', error.toString()); });
+    });
+</script>
+
+                                                        <button type="button" id="logoutButton" class="sigma-logout" title="Keluar dari aplikasi">
+                                                            <i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline">Keluar</span>
+                                                        </button>
+                                                    </div>
+                                                </header>
+
+                                                <section class="sigma-hero" aria-label="Identitas halaman">
+                                                    <div class="sigma-hero-content">
+                                                        <span class="sigma-hero-kicker">Sistem Informasi Gudang &amp; Manajemen Aset</span>
+                                                        <h1>Stock Opname &amp; Audit Gudang</h1>
+                                                        <nav aria-label="breadcrumb">
+                                                            <ol class="breadcrumb mb-0">
+                                                                <li class="breadcrumb-item"><a href="dashboard.html">SIGMA</a></li>
+                                                                <li class="breadcrumb-item active" aria-current="page">Stock Opname &amp; Audit Gudang</li>
+                                                            </ol>
+                                                        </nav>
+                                                    </div>
+                                                </section>
+                                            </div>
+
+                                            <main class="app-content animate-fade-in">
+<script>
+    window.API_BASE_URL = '';
+</script>
+
+<!-- STYLE KHUSUS HALAMAN INI -->
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    .bg-pertamina-red {
+        background-color: #ED1B24 !important;
+    }
+
+    .text-pertamina-red {
+        color: #ED1B24 !important;
+    }
+
+    .btn-pertamina-red {
+        background-color: #ED1B24;
+        color: white;
+        border: none;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-pertamina-red:hover {
+        background-color: #d0121a;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #003876 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15) !important;
+    }
+
+    .img-thumbnail-hover {
+        transition: transform 0.2s ease;
+        cursor: pointer;
+    }
+
+    .img-thumbnail-hover:hover {
+        transform: scale(1.1);
+    }
+
+    /* --- STYLE UNTUK CUSTOM DROPDOWN --- */
+    .custom-dropdown-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-select-input {
+        cursor: pointer;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.45rem 0.8rem;
+        border-radius: 50rem;
+        font-weight: 500;
+        color: #212529;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .custom-select-input:hover,
+    .custom-select-input.active {
+        border-color: #003876;
+        box-shadow: 0 0 0 0.2rem rgba(0, 56, 118, 0.15);
+        background-color: white;
+    }
+
+    .custom-dropdown-list {
+        position: absolute;
+        z-index: 1050;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        margin-top: 8px;
+        border: 1px solid #dcdcdc;
+        padding: 10px 0;
+    }
+
+    .dropdown-item-custom {
+        cursor: pointer;
+        padding: 8px 20px;
+        color: #333;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #e6f0fa;
+        color: #003876;
+    }
+</style>
+
+<!-- KONTEN UTAMA -->
+<div class="container py-4 px-2 px-md-4 animate-fade-in" style="max-width: 1350px;">
+
+    <div id="alertContainer"></div>
+
+    <div id="opnameReminderPanel" class="opname-reminder-panel rounded-4 p-3 p-md-4 mb-4 d-none" role="status" aria-live="polite">
+        <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+            <div class="opname-reminder-icon" aria-hidden="true">
+                <i class="bi bi-exclamation-lg"></i>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <h6 id="opnameReminderTitle" class="fw-bold text-dark mb-0">Reminder Stock Opname</h6>
+                    <span class="badge rounded-pill text-bg-danger">Belum lengkap</span>
+                </div>
+                <p id="opnameReminderMessage" class="text-muted small mb-2">Memeriksa status opname bulan ini...</p>
+                <div class="opname-reminder-progress" aria-label="Progress stock opname">
+                    <span id="opnameReminderProgress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></span>
+                </div>
+            </div>
+            <a id="opnameReminderAction" href="opname.html" class="btn btn-danger rounded-pill px-4 py-2 fw-semibold text-nowrap">
+                <i class="bi bi-clipboard-check me-1"></i> Lanjut Opname
+            </a>
+        </div>
+    </div>
+
+    <!-- CARD ATAS -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div
+            class="card-body p-3 p-md-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3 flex-shrink-0"
+                     style="width: 50px; height: 50px;">
+                    <i class="bi bi-clipboard-check text-danger fs-5"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark m-0 fs-6 fs-md-5">Stock Opname & Audit Inventaris Gudang</h5>
+                    <p class="text-muted small m-0 mt-1" id="periodeSubtitle">Pemeriksaan fisik inventaris berkala.</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 w-100 w-md-auto justify-content-end">
+                <a href="#" data-static-disabled="true"
+                   class="btn btn-primary rounded-pill px-3 px-md-4 py-2 fw-semibold shadow-sm text-nowrap flex-grow-1 flex-md-grow-0 justify-content-center text-center"
+                   style="font-size: 0.85rem;">
+                    <i class="bi bi-archive-fill me-1"></i> Arsip Opname
+                </a>
+                <a href="dashboard.html"
+                   class="btn btn-light border rounded-pill px-3 px-md-4 py-2 fw-semibold text-dark shadow-sm d-flex align-items-center text-nowrap flex-grow-1 flex-md-grow-0 justify-content-center text-center"
+                   style="font-size: 0.85rem;">
+                    Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARD BAWAH -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white mb-5">
+        <div class="card-body p-3 p-md-5">
+
+            <!-- FORM FILTER -->
+            <form id="filterForm" onsubmit="handleFilterSubmit(event)" class="row g-3 align-items-end mb-4">
+                <!-- 1. Kolom Cari Perangkat -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label text-muted small fw-semibold mb-1">Cari Perangkat</label>
+                    <input type="text" id="searchStringInput" name="searchString"
+                           class="form-control rounded-pill bg-light border shadow-sm text-dark px-3"
+                           style="font-size: 0.85rem;" placeholder="Nama / S/N...">
+                </div>
+
+                <!-- 2. Kolom Kategori -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label text-muted small fw-semibold mb-1">Kategori</label>
+                    <div class="custom-dropdown-container">
+                        <div class="custom-select-input shadow-sm bg-light border" id="kategoriSelectBox"
+                             onclick="toggleDropdown('kategoriDropdownList', 'kategoriSelectBox')"
+                             style="font-size: 0.85rem;">
+                            <span id="kategoriSelectedText" class="text-truncate">Semua Kategori</span>
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </div>
+                        <input type="hidden" name="kategori" id="filterKategoriValue" value="">
+                        <div class="custom-dropdown-list shadow-lg" id="kategoriDropdownList"
+                             style="font-size: 0.85rem;">
+                            <div class="dropdown-item-custom fw-semibold"
+                                 onclick="selectItem('', 'Semua Kategori', 'kategoriSelectedText', 'filterKategoriValue', 'kategoriDropdownList', 'kategoriSelectBox')">
+                                Semua Kategori
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Kolom Lokasi Rak -->
+                <div class="col-12 col-md-3">
+                    <label class="form-label text-muted small fw-semibold mb-1">Lokasi Rak</label>
+                    <div class="custom-dropdown-container">
+                        <div class="custom-select-input shadow-sm bg-light border" id="lokasiSelectBox"
+                             onclick="toggleDropdown('lokasiDropdownList', 'lokasiSelectBox')"
+                             style="font-size: 0.85rem;">
+                            <span id="lokasiSelectedText" class="text-truncate">Semua Rak</span>
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </div>
+                        <input type="hidden" name="lokasiRak" id="filterLokasiValue" value="">
+                        <div class="custom-dropdown-list rack-filter-dropdown shadow-lg" id="lokasiDropdownList" style="font-size: 0.85rem;">
+                            <div class="dropdown-item-custom fw-semibold"
+                                 onclick="selectItem('', 'Semua Rak', 'lokasiSelectedText', 'filterLokasiValue', 'lokasiDropdownList', 'lokasiSelectBox')">
+                                Semua Rak
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Kolom Tombol Aksi (Filter & PDF) -->
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit"
+                            class="btn btn-pertamina-red rounded-pill btn-sm fw-bold text-white shadow-sm w-50 py-2 text-nowrap"
+                            style="font-size: 0.8rem;">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter
+                    </button>
+                    <a id="downloadPdfBtn" href="#"
+                       class="btn btn-danger rounded-pill btn-sm fw-semibold shadow-sm px-2 py-2 w-50 text-nowrap text-center"
+                       style="font-size: 0.8rem;">
+                        <i class="bi bi-file-pdf me-1"></i> PDF
+                    </a>
+                </div>
+            </form>
+
+            <!-- TABEL DATA -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-nowrap" style="font-size: 0.85rem;">
+                    <thead class="table-light text-uppercase text-secondary">
+                        <tr>
+                            <th class="text-center py-3 rounded-start-3" style="width: 50px;">No</th>
+                            <th class="py-3">Lokasi Gudang & Rak</th>
+                            <th class="py-3">Nama Perangkat</th>
+                            <th class="py-3">Kategori / S/N</th>
+                            <th class="text-center py-3">Sistem</th>
+                            <th class="text-center py-3" id="thBulanFisik">Fisik</th>
+                            <th class="text-center py-3">Selisih</th>
+                            <th class="text-center py-3">Kondisi</th>
+                            <th class="text-center py-3">Foto</th>
+                            <th class="py-3">Tgl Opname</th>
+                            <th class="text-center py-3 rounded-end-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-5 fst-italic">Memuat data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="opname-pagination-bar">
+                <span id="opnamePageSummary" class="opname-page-summary">Memuat data...</span>
+                <nav id="opnamePagination" class="opname-pagination" aria-label="Navigasi halaman stock opname"></nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL UPDATE OPNAME ================= -->
+<div class="modal fade" id="opnameModal" tabindex="-1" aria-labelledby="opnameModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <form id="recordOpnameForm" onsubmit="handleRecordOpnameSubmit(event)" enctype="multipart/form-data">
+                <input name="__RequestVerificationToken" type="hidden" value="CfDJ8MNPeXoTTfRNop8m00aJ_obah8AcS0Ce1b4gLyVvVx5BCSCUm8pubBn-_Y8j41KnsEwZvMWEKqp4v1o9wE6A0Ss2F0tXyZ74AfLi9b7YQfxPUewf-y4tV2X32j_fl71KD6WfSVs-JyCGJQiGoA4MmKbnQktQd-5Jh4Tsehsq4TmgpOpP3LpTEDc90ZlkXjXteA" />
+                <input type="hidden" id="modalPerangkatId" name="perangkatId" />
+                <input type="hidden" id="modalJumlahSistemHidden" name="jumlahSistem" value="1" />
+
+                <div class="modal-body p-3 p-md-5 position-relative">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3 m-md-4 shadow-none"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+
+                    <h5 class="fw-bold text-dark mb-4 fs-5 pe-4" id="modalTitlePeriode">
+                        Form Update Stock Opname
+                    </h5>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Nama Perangkat</label>
+                        <input type="text" id="modalNamaPerangkat"
+                               class="form-control rounded-pill bg-light border shadow-sm px-3" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Lokasi Gudang & Rak Fisik</label>
+                        <input type="text" id="modalLokasiRak"
+                               class="form-control rounded-pill bg-light border shadow-sm px-3 text-danger fw-bold"
+                               readonly />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-semibold">Stok di Sistem</label>
+                            <input type="number" id="modalJumlahSistem"
+                                   class="form-control rounded-pill bg-light border shadow-sm px-3" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small fw-semibold">Jumlah Fisik (Audit)</label>
+                            <input type="number" id="modalJumlahFisik" name="jumlahFisik"
+                                   class="form-control rounded-pill shadow-sm px-3" placeholder="Jumlah fisik..."
+                                   required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Kondisi Barang</label>
+                        <select name="kondisiFisik" id="modalKondisiFisik"
+                                class="form-select rounded-pill shadow-sm px-3" required>
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak">Rusak</option>
+                            <option value="Hilang">Hilang</option>
+                        </select>
+                    </div>
+
+                    <!-- FITUR PILIHAN SUMBER FOTO (MENU INTERAKTIF / DROPDOWN) -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Dokumentasi Foto Fisik</label>
+
+                        <!-- Tombol Utama dengan Dropdown Menu Pilihan -->
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-outline-danger w-100 rounded-pill btn-sm py-2 fw-semibold shadow-sm d-flex align-items-center justify-content-center gap-2 dropdown-toggle"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-camera-fill fs-5"></i> Pilih Sumber Foto
+                            </button>
+                            <ul class="dropdown-menu w-100 shadow-lg rounded-4 border-0 p-2">
+                                <li>
+                                    <button
+                                        class="dropdown-item rounded-3 py-2 fw-semibold text-dark d-flex align-items-center gap-2"
+                                        type="button" onclick="triggerCamera()">
+                                        <i class="bi bi-camera-fill text-danger fs-5"></i> Ambil dari Kamera
+                                    </button>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider my-1">
+                                </li>
+                                <li>
+                                    <button
+                                        class="dropdown-item rounded-3 py-2 fw-semibold text-dark d-flex align-items-center gap-2"
+                                        type="button" onclick="triggerGallery()">
+                                        <i class="bi bi-image-fill text-primary fs-5"></i> Pilih dari File / Galeri
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Input File Tersembunyi untuk Kamera -->
+                        <input type="file" id="inputKamera" accept="image/*" capture="environment" class="d-none"
+                               onchange="previewSelectedImage(this)" />
+
+                        <!-- Input File Tersembunyi untuk Galeri/File -->
+                        <input type="file" id="inputGaleri" accept="image/*" class="d-none"
+                               onchange="previewSelectedImage(this)" />
+
+                        <!-- Kotak Informasi & Pratinjau Gambar yang Dipilih -->
+                        <div id="imagePreviewContainer" class="mt-2 text-center p-2 border rounded-4 bg-light"
+                             style="display: none;">
+                            <img id="previewImg" src="#" alt="Pratinjau Foto" class="rounded-3 shadow-sm mb-2"
+                                 style="max-height: 120px; object-fit: contain;" />
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-0 fs-7"
+                                        onclick="resetImageSelection()">
+                                    <i class="bi bi-trash me-1"></i> Hapus / Ganti Foto
+                                </button>
+                            </div>
+                        </div>
+
+                        <small class="text-muted fs-7 mt-1 d-block" id="imageHelpText">Klik tombol di atas untuk memilih
+                            memotret langsung atau mengambil file dari galeri.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-semibold">Catatan / Keterangan Selisih</label>
+                            <textarea name="keterangan" id="modalKeterangan" class="form-control rounded-4 shadow-sm p-3"
+                                      rows="3" placeholder="Tuliskan catatan jika ada selisih..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4 border fw-semibold shadow-sm"
+                                    data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-pertamina-red rounded-pill px-4 fw-bold shadow-sm">Simpan
+                                Opname</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= MODAL VIEWER FOTO PENUH ================= -->
+        <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-transparent border-0 shadow-none">
+                    <div class="modal-body p-0 position-relative text-center">
+                        <button type="button"
+                                class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow-none bg-dark p-2 rounded-circle"
+                                data-bs-dismiss="modal" aria-label="Close" style="z-index: 1055;"></button>
+                        <img id="modalFullImage" src="" alt="Foto Ukuran Penuh" class="img-fluid rounded-4 shadow-lg w-100"
+                             style="max-height: 85vh; object-fit: contain; background-color: rgba(255,255,255,0.9);" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+</main>
+                                            <footer class="app-footer">
+                                                <span>&copy; 2026 PT Pertamina Trans Kontinental</span>
+                                                <span>SIGMA · Sistem Gudang ICT</span>
+                                            </footer>
+                                        </div>
+
+                                        
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/jquery/dist/jquery.min.js"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/lib/sweetalert2/sweetalert2.all.min.js"></script>
+                                        
+                                        <script>window.API_BASE_URL = ''; window.BACKEND_BASE_URL = ''; window.SIGMA_STATIC_EXPORT = true;</script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/js/api-client.js?v=VmawJtYgT8DM_CVgCqrRyAbyP1OoJe-s2b66bTLWmRk"></script>
+                                        <script src="Frontend/PTK.SIGMA.Web/wwwroot/js/site.js?v=zF6NDiibaizjDt2XcNPENQN0lf_ImkqqXcaf0idTqgo"></script>
+                                        
+            <script>
+                let opnameModalInstance;
+                let imageViewerModalInstance;
+                let selectedFileBlob = null;
+                let opnameCurrentPage = 1;
+                let opnameItems = [];
+                let opnameLatestMap = {};
+                const opnamePageSize = 8;
+                const listBulan = {
+                    1: "Januari", 2: "Februari", 3: "Maret", 4: "April",
+                    5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
+                    9: "September", 10: "Oktober", 11: "November", 12: "Desember"
+                };
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    const modalEl = document.getElementById('opnameModal');
+                    if (modalEl) {
+                        document.body.appendChild(modalEl);
+                        opnameModalInstance = new bootstrap.Modal(modalEl);
+                    }
+
+                    const imgModalEl = document.getElementById('imageViewerModal');
+                    if (imgModalEl) {
+                        document.body.appendChild(imgModalEl);
+                        imageViewerModalInstance = new bootstrap.Modal(imgModalEl);
+                    }
+
+                    loadOpnameData();
+                });
+
+                async function loadOpnameData() {
+                    const searchString = document.getElementById('searchStringInput').value;
+                    const kategori = document.getElementById('filterKategoriValue').value;
+                    const lokasiRak = document.getElementById('filterLokasiValue').value;
+
+                    let url = `${window.API_BASE_URL}/api/opname?`;
+                    const params = new URLSearchParams();
+                    if (searchString) params.append('searchString', searchString);
+                    if (kategori) params.append('kategori', kategori);
+                    if (lokasiRak) params.append('lokasiRak', lokasiRak);
+
+                    try {
+                        const response = await fetch(url + params.toString(), { credentials: 'include' });
+                        if (response.status === 401) {
+                            window.location.href = 'index.html';
+                            return;
+                        }
+                        const resData = await response.json();
+
+                        if (resData && resData.success) {
+                            const data = resData.data;
+                            const filters = data.filters;
+                            const perangkatList = data.perangkatList || [];
+                            const latestOpnames = data.latestOpnames || {};
+
+                            const bulanNama = listBulan[filters.currentBulan] || "Bulan Ini";
+                            document.getElementById('periodeSubtitle').textContent = `Pemeriksaan fisik inventaris berkala periode ${bulanNama} ${filters.currentTahun}.`;
+                            document.getElementById('modalTitlePeriode').textContent = `Form Update Stock Opname (${bulanNama} ${filters.currentTahun})`;
+                            document.getElementById('thBulanFisik').textContent = `Fisik (${bulanNama})`;
+
+                            // Update PDF Download Link
+                            const pdfParams = new URLSearchParams();
+                            if (filters.currentLokasi) pdfParams.append('lokasiRak', filters.currentLokasi);
+                            if (filters.currentKategori) pdfParams.append('kategori', filters.currentKategori);
+                            if (filters.currentFilter) pdfParams.append('searchString', filters.currentFilter);
+                            pdfParams.append('bulan', filters.currentBulan);
+                            pdfParams.append('tahun', filters.currentTahun);
+                            document.getElementById('downloadPdfBtn').href = `${window.API_BASE_URL}/api/opname/download-pdf?` + pdfParams.toString();
+
+                            renderDropdowns(filters.lokasiList || [], filters.kategoriList || [], filters.currentLokasi, filters.currentKategori);
+                            opnameItems = perangkatList;
+                            opnameLatestMap = latestOpnames;
+                            opnameCurrentPage = 1;
+                            renderTable();
+                        }
+                    } catch (error) {
+                        console.error('Gagal memuat data stock opname:', error);
+                    }
+                }
+
+                function handleFilterSubmit(e) {
+                    e.preventDefault();
+                    loadOpnameData();
+                }
+
+                function escapeHtml(value) {
+                    return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                    })[character]);
+                }
+
+                function renderDropdowns(lokasiList, kategoriList, currentLokasi, currentKategori) {
+                    // Kategori Dropdown
+                    const katListEl = document.getElementById('kategoriDropdownList');
+                    katListEl.innerHTML = `<div class="dropdown-item-custom fw-semibold" onclick="selectItem('', 'Semua Kategori', 'kategoriSelectedText', 'filterKategoriValue', 'kategoriDropdownList', 'kategoriSelectBox'); loadOpnameData();">Semua Kategori</div>`;
+                    kategoriList.forEach(kat => {
+                        const encoded = encodeURIComponent(String(kat)).replace(/'/g, '%27');
+                        katListEl.innerHTML += `<div class="dropdown-item-custom" onclick="selectItem(decodeURIComponent('${encoded}'), decodeURIComponent('${encoded}'), 'kategoriSelectedText', 'filterKategoriValue', 'kategoriDropdownList', 'kategoriSelectBox'); loadOpnameData();">${escapeHtml(kat)}</div>`;
+                    });
+                    document.getElementById('kategoriSelectedText').innerText = currentKategori || 'Semua Kategori';
+                    document.getElementById('filterKategoriValue').value = currentKategori || '';
+
+                    // Lokasi Rak Dropdown
+                    const lokListEl = document.getElementById('lokasiDropdownList');
+                    window.renderSigmaRackDropdown(
+                        lokListEl,
+                        lokasiList || [],
+                        (value, label) => {
+                            selectItem(value, label, 'lokasiSelectedText', 'filterLokasiValue', 'lokasiDropdownList', 'lokasiSelectBox');
+                            loadOpnameData();
+                        },
+                        { placeholder: 'Semua Rak' }
+                    );
+                    document.getElementById('lokasiSelectedText').innerText = currentLokasi || 'Semua Rak';
+                    document.getElementById('filterLokasiValue').value = currentLokasi || '';
+                }
+
+                function renderTable() {
+                    const tbody = document.getElementById('inventoryTableBody');
+                    tbody.innerHTML = '';
+
+                    if (!opnameItems || opnameItems.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5 fst-italic">Belum ada data perangkat terdaftar di sistem.</td></tr>`;
+                        renderOpnamePagination(0);
+                        return;
+                    }
+
+                    const totalPages = Math.max(1, Math.ceil(opnameItems.length / opnamePageSize));
+                    opnameCurrentPage = Math.min(Math.max(1, opnameCurrentPage), totalPages);
+                    const startIndex = (opnameCurrentPage - 1) * opnamePageSize;
+                    const pageItems = opnameItems.slice(startIndex, startIndex + opnamePageSize);
+
+                    pageItems.forEach((p, index) => {
+                        const lastOpname = opnameLatestMap[p.id] || null;
+                        let fisikHtml = `<span class="text-muted small fst-italic">Belum audit</span>`;
+                        let selisihHtml = `<span class="text-muted">-</span>`;
+                        let kondisiHtml = `<span class="badge bg-light text-muted border px-2 py-1">-</span>`;
+                        let fotoHtml = `<span class="text-muted small">-</span>`;
+                        let tglOpnameStr = `-`;
+
+                        if (lastOpname) {
+                            fisikHtml = `<span class="badge bg-info text-dark px-2 py-1">${Number(lastOpname.jumlahFisik || 0)}</span>`;
+
+                            if (lastOpname.selisih < 0) {
+                                selisihHtml = `<span class="badge bg-danger px-2 py-1">${Number(lastOpname.selisih || 0)}</span>`;
+                            } else if (lastOpname.selisih > 0) {
+                                selisihHtml = `<span class="badge bg-warning text-dark px-2 py-1">+${Number(lastOpname.selisih || 0)}</span>`;
+                            } else {
+                                selisihHtml = `<span class="badge bg-success px-2 py-1">0</span>`;
+                            }
+
+                            kondisiHtml = `<span class="badge bg-light text-dark border px-2 py-1">${escapeHtml(lastOpname.kondisiFisik || '-')}</span>`;
+
+                            if (lastOpname.fotoOpname) {
+                                const fotoUrl = resolveOpnameImageUrl(lastOpname.fotoOpname);
+                                const encodedFotoUrl = encodeURIComponent(fotoUrl).replace(/'/g, '%27');
+                                fotoHtml = `<a href="#" onclick="event.preventDefault();openImageModal(decodeURIComponent('${encodedFotoUrl}'))" title="Lihat Foto Full">
+                                                                <img src="${escapeHtml(fotoUrl)}" alt="Foto Opname" class="rounded-3 shadow-sm border img-thumbnail-hover" style="width: 55px; height: 55px; object-fit: cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" /><span class="text-muted small align-items-center gap-1" style="display:none"><i class="bi bi-image"></i> Tidak tersedia</span>
+                                                            </a>`;
+                            }
+
+                            if (lastOpname.tanggalOpname) {
+                                const dateObj = new Date(lastOpname.tanggalOpname);
+                                tglOpnameStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                            }
+                        }
+
+                        const lokasiRakText = `${p.namaLokasi || '-'} - ${(p.lokasiRak || '-')}`;
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                                                        <td class="text-center fw-semibold text-muted">${startIndex + index + 1}</td>
+                                                        <td>
+                                                            <div class="fw-semibold text-dark">${escapeHtml(p.namaLokasi || '-')}</div>
+                                                            <small class="text-muted">Rak: ${escapeHtml(p.lokasiRak || '-')}</small>
+                                                        </td>
+                                                        <td class="fw-bold text-dark">${escapeHtml(p.nama || '')}</td>
+                                                        <td>
+                                                            <div class="text-dark fw-medium">${escapeHtml(p.kategori || '')}</div>
+                                                            <small class="text-muted">S/N: ${escapeHtml(p.snLaptop || '-')}</small>
+                                                        </td>
+                                                        <td class="text-center"><span class="badge bg-secondary px-2 py-1">${Number(p.jumlah || 0)}</span></td>
+                                                        <td class="text-center">${fisikHtml}</td>
+                                                        <td class="text-center">${selisihHtml}</td>
+                                                        <td class="text-center">${kondisiHtml}</td>
+                                                        <td class="text-center">${fotoHtml}</td>
+                                                        <td class="text-muted">${tglOpnameStr}</td>
+                                                        <td class="text-center">
+                                                            <button type="button" class="btn btn-pertamina-red btn-sm rounded-pill px-3 py-1 shadow-sm fw-semibold"
+                                                                    onclick="openOpnameModal(this)" data-id="${Number(p.id)}" data-nama="${escapeHtml(p.nama)}"
+                                                                    data-lokasi="${escapeHtml(lokasiRakText)}"
+                                                                    data-jumlah="${Number(p.jumlah || 0)}" data-kondisi="${escapeHtml(p.kondisi || 'Baik')}">
+                                                                <i class="bi bi-pencil-square me-1"></i> Opname
+                                                            </button>
+                                                        </td>
+                                                    `;
+                        tbody.appendChild(tr);
+                    });
+                    renderOpnamePagination(totalPages);
+                }
+
+                function renderOpnamePagination(totalPages) {
+                    const summary = document.getElementById('opnamePageSummary');
+                    const pagination = document.getElementById('opnamePagination');
+                    if (!opnameItems.length) {
+                        summary.textContent = '0 perangkat';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+
+                    const start = (opnameCurrentPage - 1) * opnamePageSize + 1;
+                    const end = Math.min(opnameCurrentPage * opnamePageSize, opnameItems.length);
+                    summary.textContent = `Menampilkan ${start}-${end} dari ${opnameItems.length} perangkat`;
+                    if (totalPages <= 1) {
+                        pagination.innerHTML = '';
+                        return;
+                    }
+
+                    const firstPage = Math.max(1, Math.min(opnameCurrentPage - 2, Math.max(1, totalPages - 4)));
+                    const lastPage = Math.min(totalPages, firstPage + 4);
+                    let html = `<button type="button" onclick="changeOpnamePage(${opnameCurrentPage - 1})" ${opnameCurrentPage === 1 ? 'disabled' : ''} aria-label="Halaman sebelumnya"><i class="bi bi-chevron-left"></i></button>`;
+                    for (let page = firstPage; page <= lastPage; page += 1) {
+                        html += `<button type="button" onclick="changeOpnamePage(${page})" class="${page === opnameCurrentPage ? 'active' : ''}">${page}</button>`;
+                    }
+                    html += `<button type="button" onclick="changeOpnamePage(${opnameCurrentPage + 1})" ${opnameCurrentPage === totalPages ? 'disabled' : ''} aria-label="Halaman berikutnya"><i class="bi bi-chevron-right"></i></button>`;
+                    pagination.innerHTML = html;
+                }
+
+                function changeOpnamePage(page) {
+                    const totalPages = Math.max(1, Math.ceil(opnameItems.length / opnamePageSize));
+                    opnameCurrentPage = Math.min(Math.max(1, page), totalPages);
+                    renderTable();
+                    document.getElementById('inventoryTableBody')?.closest('.table-responsive')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                function openOpnameModal(button) {
+                    document.getElementById('modalPerangkatId').value = button.getAttribute('data-id');
+                    document.getElementById('modalNamaPerangkat').value = button.getAttribute('data-nama');
+                    document.getElementById('modalLokasiRak').value = button.getAttribute('data-lokasi');
+                    document.getElementById('modalJumlahSistem').value = button.getAttribute('data-jumlah');
+                    document.getElementById('modalJumlahSistemHidden').value = button.getAttribute('data-jumlah');
+                    document.getElementById('modalJumlahFisik').value = button.getAttribute('data-jumlah');
+                    document.getElementById('modalKondisiFisik').value = button.getAttribute('data-kondisi') || 'Baik';
+                    document.getElementById('modalKeterangan').value = '';
+
+                    resetImageSelection();
+
+                    if (opnameModalInstance) {
+                        opnameModalInstance.show();
+                    }
+                }
+
+                function resolveOpnameImageUrl(value) {
+                    if (!value) return '';
+                    if (/^https?:\/\//i.test(value)) return value;
+                    if (value.startsWith('/api/files/')) return value;
+                    const fileName = value.replace(/^.*[\\/]/, '');
+                    return `${window.API_BASE_URL}/api/files/perangkat?fileName=${encodeURIComponent(fileName)}`;
+                }
+
+                function openImageModal(imageUrl) {
+                    document.getElementById('modalFullImage').src = imageUrl;
+                    if (imageViewerModalInstance) {
+                        imageViewerModalInstance.show();
+                    }
+                }
+
+                function triggerCamera() {
+                    document.getElementById('inputGaleri').value = '';
+                    document.getElementById('inputKamera').click();
+                }
+
+                function triggerGallery() {
+                    document.getElementById('inputKamera').value = '';
+                    document.getElementById('inputGaleri').click();
+                }
+
+                function previewSelectedImage(input) {
+                    if (input.files && input.files[0]) {
+                        selectedFileBlob = input.files[0];
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            document.getElementById('previewImg').src = e.target.result;
+                            document.getElementById('imagePreviewContainer').style.display = 'block';
+                            document.getElementById('imageHelpText').style.display = 'none';
+                        }
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                }
+
+                function resetImageSelection() {
+                    document.getElementById('inputKamera').value = '';
+                    document.getElementById('inputGaleri').value = '';
+                    document.getElementById('previewImg').src = '#';
+                    document.getElementById('imagePreviewContainer').style.display = 'none';
+                    document.getElementById('imageHelpText').style.display = 'block';
+                    selectedFileBlob = null;
+                }
+
+                async function handleRecordOpnameSubmit(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+
+                    formData.delete('fileKamera');
+                    formData.delete('fileGaleri');
+                    if (selectedFileBlob) {
+                        formData.append('FileFotoOpname', selectedFileBlob);
+                    }
+
+                    try {
+                        const response = await fetch(`${window.API_BASE_URL}/api/opname/record`, {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include'
+                        });
+
+                        const resData = await response.json();
+                        if (response.ok && resData.success) {
+                            if (opnameModalInstance) opnameModalInstance.hide();
+                            showNotification(resData.message || 'Stock opname berhasil disimpan!', 'success');
+                            await loadOpnameData();
+                            await window.SIGMA_OPNAME_REMINDER?.refresh?.();
+                        } else {
+                            showNotification(resData.message || 'Gagal menyimpan stock opname.', 'danger');
+                        }
+                    } catch (err) {
+                        console.error('Error recording opname:', err);
+                        showNotification('Terjadi kesalahan koneksi ke server.', 'danger');
+                    }
+                }
+
+                function showNotification(message, type = 'success') {
+                    const container = document.getElementById('alertContainer');
+                    const bgClass = type === 'success' ? '#f0fdf4' : '#fef2f2';
+                    const textClass = type === 'success' ? '#166534' : '#991b1b';
+                    const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+
+                    container.innerHTML = `
+                                                    <div class="alert alert-${type} alert-dismissible fade show border-0 shadow-sm py-3 mb-4 rounded-4" role="alert" style="background-color: ${bgClass}; color: ${textClass};">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <i class="bi ${iconClass}"></i>
+                                                            <span>${escapeHtml(message)}</span>
+                                                        </div>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                `;
+                }
+
+                // --- SCRIPT CUSTOM DROPDOWN ---
+                function toggleDropdown(listId, boxId) {
+                    const dropdown = document.getElementById(listId);
+                    const box = document.getElementById(boxId);
+
+                    document.querySelectorAll('.custom-dropdown-list').forEach(function (el) {
+                        if (el.id !== listId) el.style.display = 'none';
+                    });
+                    document.querySelectorAll('.custom-select-input').forEach(function (el) {
+                        if (el.id !== boxId) el.classList.remove('active');
+                    });
+
+                    if (dropdown.style.display === 'block') {
+                        dropdown.style.display = 'none';
+                        box.classList.remove('active');
+                    } else {
+                        dropdown.style.display = 'block';
+                        box.classList.add('active');
+                    }
+                }
+
+                function selectItem(value, text, textElementId, hiddenInputId, dropdownListId, boxId) {
+                    document.getElementById(textElementId).innerText = text;
+                    document.getElementById(hiddenInputId).value = value;
+                    document.getElementById(dropdownListId).style.display = 'none';
+                    document.getElementById(boxId).classList.remove('active');
+                }
+
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.custom-dropdown-container')) {
+                        document.querySelectorAll('.custom-dropdown-list').forEach(function (el) {
+                            el.style.display = 'none';
+                        });
+                        document.querySelectorAll('.custom-select-input').forEach(function (el) {
+                            el.classList.remove('active');
+                        });
+                    }
+                });
+            </script>
+        
+                                    </body>
+
+                                </html>
